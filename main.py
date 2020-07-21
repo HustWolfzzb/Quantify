@@ -148,5 +148,5 @@ def main():
 
 if __name__ == '__main__':
 	# main()
-	os.system('python3 bao_stock.py')
+	os.system('python3 mysql.py')
 	# os.system('python3 neo4j.py')
