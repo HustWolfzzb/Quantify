@@ -2,8 +2,8 @@ import easytrader
 import time
 import tushare as ts
 import datetime
-user = easytrader.use('htzq_client')
-user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+# user = easytrader.use('htzq_client')
+# user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.prepare(user='张照博', password='379926', comm_password='379926')
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 
@@ -34,8 +34,18 @@ class User():
         self.zi_jin_yu_e = user.balance['资金余额']
         self.ke_yong_jin_e = user.balance['可用金额']
         self.ke_qu_jin_e = user.balance['可取金额']
-        self.zong_zi_chan = user.balance['可取金额']
+        self.zong_zi_chan = user.balance['总资产']
         self.stock = Stock(user.position)
+
+
+    def update_info(self):
+        self.user.update()
+        self.zi_jin_yu_e = self.user.balance['资金余额']
+        self.ke_yong_jin_e = self.user.balance['可用金额']
+        self.ke_qu_jin_e = self.user.balance['可取金额']
+        self.zong_zi_chan = self.user.balance['可取金额']
+        self.stock = Stock(self.user.position)
+
 
     def buy(self, code, price, amount):
         data = ts.get_realtime_quotes(code)
@@ -45,7 +55,7 @@ class User():
         elif price > price_now :
             price = price_now
         print(self.user.buy(code, price, amount))
-
+        self.user.update()
 
     def sell(self, code, price, amount):
         data = ts.get_realtime_quotes(code)
@@ -58,6 +68,7 @@ class User():
         if leftAmount < amount:
             amount = leftAmount
         print(self.user.sell(code, price, amount))
+        self.user.update()
 
 class Stock():
     def __init__(self, position):
@@ -69,7 +80,6 @@ class Stock():
 
     def cost_Calculate(self, code, price, amount):
         print("*"*20 + '\n' + "股票代码：%s \n成交价：%s\n成交份额：%s\n交易成本：%s\n"%(code, price, amount, price*amount*0.0012) + "*"*20)
-
 
     def get_position(self):
         return self.position
