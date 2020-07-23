@@ -11,7 +11,6 @@ from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 
 
-
 class simulation_User():
     balance = {
                        '资金余额': 100,
@@ -39,6 +38,7 @@ class simulation_User():
 
 
 
+
 def func_sin(x, p):
     """
     数据拟合所用的函数: A*cos(2*pi*k*x + theta)
@@ -46,12 +46,17 @@ def func_sin(x, p):
     A, k, theta = p
     return A * np.sin(k * x + theta)
 
+#直线方程
+def f_1(x, a, b ):
+    return a * x +b
+
+
 # 二次曲线方程
 def f_2(x, A, B, C):
     return A * x * x + B * x + C
 
 # 三次曲线方程
-def f_3(x, A, B, C, D):
+def f_3(x, A, B, C, D ):
     return A * x * x * x + B * x * x + C * x + D
 
 def residuals(p, y, x, fun):
@@ -61,19 +66,26 @@ def residuals(p, y, x, fun):
     return y - fun(x, p)
 
 def nihe(data):
-
+    if type(data[0]) == str:
+        data = [float(x) for x in data]
     x0 = np.linspace(0, len(data), len(data))
     y0 = data
     A2, B2, C2 = curve_fit(f_2, x0, y0)[0]
     x2 = np.arange(0, len(data), len(data))
     y2 = A2 * x2 * x2 + B2 * x2 + C2
-    print(np.sqrt(np.sum(np.square(y0 - y2))))
+    print("偏差值",np.sqrt(np.sum(np.square(y0 - y2))))
     return A2, B2, C2
 
 
 def main():
-    su = simulation_User()
-    user = User(su)
+    # su = simulation_User()
+    # user = User(su)
+    # pro = ts.pro_api('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
+    # all_data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
+    # ts_code = list(all_data.ts_code)
+    # symbol = list(all_data.symbol)
+
+
     realtime_Price = [17.70,17.92,17.71,17.84,17.97,
                       17.91,17.96,18.06,18.11,18.12,
                       18.18,18.28,18.47,18.45,18.36,
@@ -87,7 +99,6 @@ def main():
     data = realtime_Price[:50]
     A2, B2, C2 = nihe(data)
     x2 = np.arange(0, len(data) + 10)
-    print(x2)
     y2 = f_2(x2, A2, B2, C2)
     if max(y2) != y2[-1]:
         print("卖出点在：%s"%max(y2))
