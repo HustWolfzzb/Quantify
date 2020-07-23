@@ -57,9 +57,10 @@ def main():
                 else:
                     print("持续上升中！！")
     for s in symbol:
-        with open('tickData/%s-%s.txt'%(stock_code[s],s), 'w', encoding='utf8') as out:
+        with open('tickData/%s-%s.txt'%(stock_code[s],s), 'a', encoding='utf8') as out:
             out.write("时间：%s\n"%datetime.now().isoformat())
             out.write(", ".join(tick_data[s]))
+            out.write("\n")
 
 
 if __name__ == '__main__':
