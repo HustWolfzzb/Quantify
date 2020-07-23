@@ -9,6 +9,7 @@ from Entity import User,Stock
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
+from datetime import datetime, time, timedelta
 
 
 class simulation_User():
@@ -37,19 +38,16 @@ class simulation_User():
         print("初始化一个模拟器")
 
 
-
-
-def func_sin(x, p):
+def residuals(p, y, x, fun):
     """
-    数据拟合所用的函数: A*cos(2*pi*k*x + theta)
+    实验数据x, y和拟合函数之间的差，p为拟合需要找到的系数
     """
-    A, k, theta = p
-    return A * np.sin(k * x + theta)
+    return y - fun(x, p)
+
 
 #直线方程
-def f_1(x, a, b ):
+def f_1(x, a, b):
     return a * x +b
-
 
 # 二次曲线方程
 def f_2(x, A, B, C):
@@ -59,22 +57,52 @@ def f_2(x, A, B, C):
 def f_3(x, A, B, C, D ):
     return A * x * x * x + B * x * x + C * x + D
 
-def residuals(p, y, x, fun):
+def func_sin(x, A, k, theta):
     """
-    实验数据x, y和拟合函数之间的差，p为拟合需要找到的系数
+    数据拟合所用的函数: A*cos(2*pi*k*x + theta)
     """
-    return y - fun(x, p)
+    return A * np.sin(k * x + theta)
+
 
 def nihe(data):
     if type(data[0]) == str:
         data = [float(x) for x in data]
     x0 = np.linspace(0, len(data), len(data))
     y0 = data
-    A2, B2, C2 = curve_fit(f_2, x0, y0)[0]
-    x2 = np.arange(0, len(data), len(data))
-    y2 = A2 * x2 * x2 + B2 * x2 + C2
-    print("偏差值",np.sqrt(np.sum(np.square(y0 - y2))))
-    return A2, B2, C2
+    func = [f_2, f_3, func_sin]
+    offset_min = 10000000
+    func_min_offset = -1
+    para_min_offset = []
+    for f in range(len(func)):
+        x2 = np.arange(0, len(data), len(data))
+        if f == 0:
+            para = curve_fit(func[f], x0, y0)[0]
+            A, B, C = para
+            y2 = func[f](x2, A, B, C)
+            offset = np.sqrt(np.sum(np.square(y0 - y2)))
+            if offset < offset_min:
+                offset_min = offset
+                para_min_offset = para
+                func_min_offset = 0
+        elif f == 1:
+            para = curve_fit(func[f], x0, y0)[0]
+            A, B, C, D = para
+            y2 = func[f](x2, A, B, C, D)
+            offset = np.sqrt(np.sum(np.square(y0 - y2)))
+            if offset < offset_min:
+                offset_min = offset
+                para_min_offset = para
+                func_min_offset = 1
+        elif f == 2:
+            para = curve_fit(func[f], x0, y0)[0]
+            A, B, C = para
+            y2 = func[f](x2, A, B, C)
+            offset = np.sqrt(np.sum(np.square(y0 - y2)))
+            if offset < offset_min:
+                offset_min = offset
+                para_min_offset = para
+                func_min_offset = 2
+    return para_min_offset, func[func_min_offset], func_min_offset
 
 
 def main():
@@ -94,17 +122,50 @@ def main():
                       18.35,18.38,18.39,18.31,18.16,
                       18.16,18.10,18.17,18.29,18.14,
                       18.23,18.15,18.17,18.24,18.16,
-                      17.99,17.91,17.86,17.89,17.88]
+                      17.99,17.91,17.86,17.89,17.88,
+                      17.70, 17.92, 17.71, 17.84, 17.97,
+                      17.91, 17.96, 18.06, 18.11, 18.12,
+                      18.18, 18.28, 18.47, 18.45, 18.36,
+                      18.45, 18.48, 18.64, 18.69, 18.67,
+                      18.56, 18.60, 18.46, 18.46, 18.44,
+                      18.35, 18.38, 18.39, 18.31, 18.16,
+                      18.16, 18.10, 18.17, 18.29, 18.14,
+                      18.23, 18.15, 18.17, 18.24, 18.16,
+                      17.99, 17.91, 17.86, 17.89, 17.88
+                      ]
     # print(su.position)
-    data = realtime_Price[:50]
-    A2, B2, C2 = nihe(data)
-    x2 = np.arange(0, len(data) + 10)
-    y2 = f_2(x2, A2, B2, C2)
+    data = realtime_Price[:0]
+    para, func, func_min_offset = nihe(data)
+    x2 = np.arange(0, len(data) + 20)
+    y2 = None
+    print(para, func_min_offset)
+    if func_min_offset == 0:
+        A, B, C = para
+        y2 = func(x2, A, B, C)
+    elif func_min_offset == 1:
+        A, B, C, D = para
+        y2 = func(x2, A, B, C, D)
+    elif func_min_offset == 2:
+        A, B, C = para
+        y2 = func(x2, A, B, C)
+
     if max(y2) != y2[-1]:
-        print("卖出点在：%s"%max(y2))
+        max_y2 = max(y2)
+        print("Max_y2:%s" % max_y2)
+        for x in range(len(y2[-20:])):
+            if y2[-20 + x] == max_y2:
+                print("卖出点在：%s, 时间为：%s" % (max_y2, datetime.now() + timedelta(minutes=2 * x)))
+    elif min(y2) != y2[-1]:
+        min_y2 = min(y2)
+        print("Min_y2:%s"%min_y2)
+        for x in range(len(y2[-20:])):
+            if y2[-20 + x] == min_y2:
+                print("买入点在：%s, 时间为：%s" % (min_y2, datetime.now() + timedelta(minutes=2 * x)))
     else:
-        print("持续上升中！！")
-        print(y2)
+        if max(y2) < y2[len(data)]:
+            print("持续下行中！！")
+        else:
+            print("持续上升中！！")
 
 if __name__ == '__main__':
     main()

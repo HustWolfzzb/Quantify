@@ -1,9 +1,9 @@
 import tushare as ts
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from time import sleep
 import numpy as np
-from Strategy import nihe, f_2
+from Strategy import nihe
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30
 DAY_START = time(9, 30)
@@ -44,13 +44,29 @@ def main():
             if len(data) < 8:
                 sleep(120//len(symbol))
                 continue
-            A2, B2, C2 = nihe(data)
+            para, func, func_min_offset = nihe(data)
             x2 = np.arange(0, len(data) + 20)
-            y2 = f_2(x2, A2, B2, C2)
+            y2 = None
+            if func_min_offset == 0:
+                A, B, C = para
+                y2 = func(x2, A, B, C)
+            elif func_min_offset == 1:
+                A, B, C, D = para
+                y2 = func(x2, A, B, C, D)
+            elif func_min_offset == 2:
+                A, B, C = para
+                y2 = func(x2, A, B, C)
+
             if max(y2) != y2[-1]:
-                print("卖出点在：%s" % max(y2))
+                max_y2 = max(y2)
+                for x in range(len(y2[-20:])):
+                    if y2[-20+x] == max_y2:
+                        print("卖出点在：%s, 时间为：%s" % max_y2, datetime.now() + timedelta(minutes=2*x))
             elif min(y2) != y2[-1]:
-                print("买入点在：%s"% min(y2))
+                min_y2 = min(y2)
+                for x in range(len(y2[-20:])):
+                    if y2[-20 + x] == min_y2:
+                        print("买入点在：%s, 时间为：%s" % min_y2, datetime.now() + timedelta(minutes=2 * x))
             else:
                 if max(y2) < y2[len(data)]:
                     print("持续下行中！！")

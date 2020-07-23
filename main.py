@@ -150,5 +150,5 @@ if __name__ == '__main__':
 	# main()
 	# os.system('python3 Mysql.py')
 	# os.system('python3 Neo4j.py')
-	# os.system('python3 Strategy.py')
-	os.system('python3 Operation.py')
+	os.system('python3 Strategy.py')
+	# os.system('python3 Operation.py')
