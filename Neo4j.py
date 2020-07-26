@@ -1,8 +1,8 @@
 import pandas as pd
 from py2neo import Node, Relationship, Graph, NodeMatcher, RelationshipMatcher
-import tushare as ts
 import datetime
 import time
+from Data import get_pro_stock_basic, get_index, get_fina_indicator, get_hist_data, get_stock_basics
 
 
 def createNode_1(graph, nodeFile):
@@ -34,7 +34,7 @@ def createNode_1(graph, nodeFile):
 
 
 def createIndexNode(graph):
-    data = ts.get_index()
+    data = get_index()
     en2cn = {
             "code":"指数代码",
             "change":"涨跌幅",
@@ -71,8 +71,8 @@ def getNode(graph, label, propertity, value, limit_num=10, fuzzy_search = False,
             print("参数长度不匹配~，请重新考虑")
             return
         for x in range(len(propertity)):
-            where += ('_.' + propertity[x] + "='" + value[x] +"'," )
-        where = where[:-1]
+            where += ('_.' + propertity[x] + "='" + value[x] +"' and " )
+        where = where[:-4]
 
     if fuzzy_search:
         where.replace("=", "=~")
@@ -85,12 +85,12 @@ def getNode(graph, label, propertity, value, limit_num=10, fuzzy_search = False,
             else:
                 print("模糊搜索模式下不能创建节点")
         else:
-            print("存在节点，不建议重复创建")
+            pass
     return nodes
 
 
 def update_neo4j_stock_profit_info(graph):
-    dataframe = ts.get_stock_basics()
+    dataframe = get_stock_basics()
     para_en = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
     paras_cn = ["开盘价", "最高价", "收盘价","最低价","成交量","价格变动","涨跌幅","五日均价","十日均价","二十日均价","五日均量","十日均量","二十日均量"]
     codes = list(dataframe.index)
@@ -113,7 +113,7 @@ def update_neo4j_stock_profit_info(graph):
             print("Create Stock %s"%index)
         try:
             lateestDate = graph.run("match (n:`股票`) where n.stock_id='%s' return n.最新日期"%index).data()[0].get('n.最新日期')
-            df = ts.get_hist_data(index, lateestDate, str(datetime.date.today()), 'D')
+            df = get_hist_data(index, lateestDate, str(datetime.date.today()))
             if df.empty:
                 print("没有获取到数据")
                 continue
@@ -141,18 +141,19 @@ def update_neo4j_stock_profit_info(graph):
         # break
 
 
-def update_neo4j_stock_roe_info(graph):
-    dataframe = ts.get_stock_basics()
+def update_neo4j_stock_finance_info(graph):
+
     # para_en = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
     # paras_cn = ["开盘价", "最高价", "收盘价","最低价","成交量","价格变动","涨跌幅","五日均价","十日均价","二十日均价","五日均量","十日均量","二十日均量"]
-    codes = list(dataframe.index)
     code_in_Neo4j = [x['n.stock_id'] for x in graph.run("match (n:`股票`) return n.stock_id").data()]
-    length = len(codes)
     count = 0
-    pro = ts.pro_api('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
-    ts_code = {x[:6]: x for x in list(pro.query('stock_basic', exchange='', list_status='L', fields='ts_code').ts_code)}
-    ROE = {'roe':"净资产收益率(ROE)", 'roe_waa':"加权平均净资产收益率(ROE_WAA)", 'roe_dt':"净资产收益率(扣除非经常损益,ROE_DT)", 'roe_yearly':"年化净资产收益率(ROE_YEARLY)"}
-    for index in codes:
+    basic = get_pro_stock_basic()
+    codes = list(basic['symbol'])
+    length = len(codes)
+    code_ts = {basic.at[idx, 'symbol']:basic.at[idx, 'ts_code'] for idx in basic.index}
+    code_name = {basic.at[idx, 'symbol']:basic.at[idx, 'name'] for idx in basic.index}
+    ROE = {'current_ratio':"流动比率",'quick_ratio':"速动比率",'debt_to_assets':"资产负债率", 'dp_assets_to_eqt':"权益乘数(杜邦分析)",'roe':"净资产收益率(ROE)", 'roe_waa':"加权平均净资产收益率(ROE_WAA)", 'roe_dt':"净资产收益率(扣除非经常损益,ROE_DT)", 'roe_yearly':"年化净资产收益率(ROE_YEARLY)"}
+    for index in codes[2574:]:
         count+=1
         if index == '0' or index == None:
             continue
@@ -160,14 +161,9 @@ def update_neo4j_stock_roe_info(graph):
             index = '0'*(6-len(index)) + index
         if count % int(length/50) == 0:
             print("%s / %s"%(count, length))
-        if index not in code_in_Neo4j:
-            try:
-                graph.create(Node('股票', stock_id=index, name= dataframe.at[index, 'name']))
-            except KeyError as e:
-                print("Index : %s ")
-            print("Create Stock %s"%index)
+        getNode(graph, '股票', ['stock_id', 'name'],[index,  code_name[index]], createNode=True)
         try:
-            df = pro.fina_indicator(ts_code=ts_code[index], start_date=str(datetime.date.today()))
+            df = get_fina_indicator(ts_code=code_ts[index])
             time.sleep(0.75)
             if df.empty:
                 print("没有获取到数据")
@@ -188,6 +184,10 @@ def update_neo4j_stock_roe_info(graph):
 
 
 
+def update_proppertity_for_neo4j(graph, old_new_propertity):
+    for old in old_new_propertity.keys():
+        graph.run("match(n) where exists(n.%s) set n.%s = n.%s remove n.%s"%(old, old_new_propertity[old], old, old))
+
 def update_stock_basics(graph):
     paras2cn = {"code":"代码",
                 "name":"名称",
@@ -207,7 +207,7 @@ def update_stock_basics(graph):
                 "timeToMarket":"上市日期"
              }
     paras = list(paras2cn.keys())
-    dataframe = ts.get_stock_basics()
+    dataframe = get_stock_basics()
     print(dataframe.columns)
     split_industry = set()
     area = set()
@@ -216,46 +216,34 @@ def update_stock_basics(graph):
         area.add(dataframe.at[index, 'area'])
     count = 10000
     get_si = graph.run("match (n:`行业`) return n.name").data()
-    si_in_Neo4j = [ x['n.name'] for x in  get_si]
-    print(si_in_Neo4j)
+    si_in_Neo4j = [ x['n.name'] for x in get_si]
     count += len(si_in_Neo4j)
     for si in split_industry:
         if si not in si_in_Neo4j:
-            count+=1
+            count += 1
             graph.create(Node('细分行业', splitIndustry_id = str(count), name = si))
-
+            for index in dataframe.index:
+                if dataframe.at[index, "industry"] == si:
+                    node = getNode(graph, '股票', 'stock_id', index, createNode=True)[0]
+                    si_1 = graph.nodes.match('细分行业', name=dataframe.at[index, "industry"]).first()
+                    s2s = Relationship(node, 'belong_to', si_1)
+                    graph.create(s2s)
     get_area = graph.run("match (n:`地区`) return n.name").data()
     area_in_Neo4j = [x['n.name'] for x in get_area]
-    print(area_in_Neo4j)
-    print(area)
     count += len(area_in_Neo4j)
-    show = True
     for a in area:
         if a not in area_in_Neo4j:
             count += 1
             graph.create(Node('地区', area_id=str(count), name=a))
-
-    code_in_Neo4j = [x['n.stock_id'] for x in graph.run("match (n:`股票`) return n.stock_id").data()]
+            for index in dataframe.index:
+                if dataframe.at[index, "area"] == a:
+                    node = getNode(graph, '股票', 'stock_id', index, createNode=True)[0]
+                    ar = graph.nodes.match('地区', name=dataframe.at[index, "area"]).first()
+                    s2a = Relationship(node, 'located_in', ar)
+                    graph.create(s2a)
     for index in dataframe.index:
-        if index not in code_in_Neo4j:
-            graph.create(Node('股票', stock_id=index, name= dataframe.at[index, 'name']))
-            print("Create Stock %s"%index)
-        node = graph.nodes.match('股票', stock_id=index).first()
-        si = graph.nodes.match('细分行业', name=dataframe.at[index, "industry"]).first()
-        area = graph.nodes.match('地区', name=dataframe.at[index, "area"]).first()
-        s2a = Relationship(node, 'located_in', area)
-        graph.create(s2a)
-        try:
-            s2s = Relationship(node, 'belong_to', si)
-            graph.create(s2s)
-        except AttributeError as e:
-            if show:
-                print(node)
-                print(si)
-                print(area)
-                show = False
         for p in ['name'] + paras[4:]:
-            cypher = "match (n:`股票`{stock_id:'%s'}) set n.%s = '%s'"%(index, p, dataframe.at[index, p])
+            cypher = "match (n:`股票`{stock_id:'%s'}) set n.%s = '%s'"%(index, paras2cn[p], dataframe.at[index, p])
             graph.run(cypher)
 
 
@@ -264,7 +252,20 @@ if __name__ == '__main__':
     graph = Graph('http://localhost:11003', username='neo4j', password='zzb162122')
     # graph = Graph('http://39.99.253.203:7474', username='neo4j', password='zzb162122')
     # createNode_1(graph, 'data/holders_stock.csv')
-    # update_neo4j_stock_roe_info(graph)
-    update_stock_basics(graph)
-    update_neo4j_stock_profit_info(graph)
+    update_neo4j_stock_finance_info(graph)
+    # update_stock_basics(graph)
+    # update_proppertity_for_neo4j(graph, {"pe":"市盈率",
+    #                                      "outstanding": "`流通股本`",
+    #                                      "totals": "`总股本(万)`",
+    #                                      "totalAssets": "`总资产(万)`",
+    #                                      "liquidAssets": "`流动资产`",
+    #                                      "fixedAssets": "`固定资产`",
+    #                                      "reserved": "`公积金`",
+    #                                      "reservedPerShare": "`每股公积金`",
+    #                                      "esp": "`每股收益`",
+    #                                      "bvps": "`每股净资`",
+    #                                      "pb": "`市净率`",
+    #                                      "timeToMarket": "`上市日期`"
+    #                                      })
+    # update_neo4j_stock_profit_info(graph)
     # createIndexNode(graph)

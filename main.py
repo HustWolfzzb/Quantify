@@ -50,7 +50,7 @@ class people(object):
 			self.amount -= (price * 100 + 5)
 			self.stock += 100
 			self.cost += (price * 100 + 5)
-			self.sell_out_time = 0 
+			self.sell_out_time = 0
 			# print(str(date)+'W余额：%s, 股票：%s，成本：%s，股价：%s, 总值：%s'%(self.amount, self.stock, self.cost, price, (self.amount + self.stock * price)))
 			return
 		if self.stock * price < self.cost * 1.03:
@@ -60,24 +60,24 @@ class people(object):
 				self.amount -= (price * (self.stock+100) + 5)
 				self.cost += (price * (self.stock+100) + 5)
 				self.stock += (self.stock+100)
-				self.sell_out_time = 0 
+				self.sell_out_time = 0
 				# print(str(date)+'X余额：%s, 股票：%s，成本：%s，股价：%s, 总值：%s'%(self.amount, self.stock, self.cost, price, (self.amount + self.stock * price)))
 
 			elif self.amount < (price * (self.stock+100) + 5):
 				if self.amount < price*100+5:
 					self.keep_time += 1
-					self.sell_out_time = 0 
+					self.sell_out_time = 0
 					return
 				else:
 					# print("适度购买")
 					top = int(self.stock/100)
 					for i in range(int(self.stock/100) + 1):
-						i = top - i 
+						i = top - i
 						if self.amount >= (i * 100 * price + 5):
 							self.amount -= (i*100 * price + 5)
 							self.cost += (i*100 * price + 5)
 							self.stock += i*100
-							self.sell_out_time = 0 
+							self.sell_out_time = 0
 							# print(str(date)+'Y余额：%s, 股票：%s，成本：%s，股价：%s, 总值：%s'%(self.amount, self.stock, self.cost, price, (self.amount + self.stock * price)))
 							return
 
@@ -97,7 +97,7 @@ class stock(object):
 		def update_price(self,p):
 			self.price = p
 
-					
+
 
 
 def main():
@@ -150,5 +150,6 @@ if __name__ == '__main__':
 	# main()
 	# os.system('python3 Mysql.py')
 	# os.system('python3 Neo4j.py')
-	os.system('python3 Strategy.py')
-	# os.system('python3 Operation.py')
+	# os.system('python3 Strategy.py')
+	os.system('python3 Operation.py')
+	# os.system('python3 Data.py')
