@@ -62,6 +62,7 @@ def createIndexNode(graph):
 # def add_profit_data():
 
 def getNode(graph, label, propertity, value, limit_num=10, fuzzy_search = False, createNode = False):
+    createNode = False
     matcher = NodeMatcher(graph)
     where = ""
     if type(propertity) == str and type(value) == str:
@@ -247,12 +248,14 @@ def update_stock_basics(graph):
             graph.run(cypher)
 
 
+def get_Graph():
+    return Graph('http://localhost:11003', username='neo4j', password='zzb162122')
 
 if __name__ == '__main__':
-    graph = Graph('http://localhost:11003', username='neo4j', password='zzb162122')
+    graph = get_Graph()
     # graph = Graph('http://39.99.253.203:7474', username='neo4j', password='zzb162122')
     # createNode_1(graph, 'data/holders_stock.csv')
-    update_neo4j_stock_finance_info(graph)
+    # update_neo4j_stock_finance_info(graph)
     # update_stock_basics(graph)
     # update_proppertity_for_neo4j(graph, {"pe":"市盈率",
     #                                      "outstanding": "`流通股本`",
@@ -267,5 +270,5 @@ if __name__ == '__main__':
     #                                      "pb": "`市净率`",
     #                                      "timeToMarket": "`上市日期`"
     #                                      })
-    # update_neo4j_stock_profit_info(graph)
+    update_neo4j_stock_profit_info(graph)
     # createIndexNode(graph)

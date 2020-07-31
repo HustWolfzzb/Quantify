@@ -95,10 +95,12 @@ def operate(stock_position, price, amount, operation):
     if operation == 'b':
         if stock_position['money'] < amount * price:
             return
-        stock_position['cost'] = (stock_position['cost'] * stock_position['own'] + price * amount ) / (stock_position['own']  + amount)
+        stock_position['cost'] = (stock_position['cost'] * stock_position['own'] + price * amount * 1.0001 ) / (stock_position['own']  + amount)
         stock_position['own'] += amount
-        stock_position['money'] -= amount * price
+        stock_position['money'] -= amount * price * 1.0001
         stock_position['freeze'] += amount
+        stock_position['operations'] += 1
+
         # print("===>>>>买入成功！价格：%s，数量：%s，当前持仓：%s, 当前可用：%s，价格成本：%s"%(price, amount, stock_position['own'], stock_position['use'], stock_position['cost']))
     elif operation == 's':
         if stock_position['use'] < amount:
@@ -106,69 +108,112 @@ def operate(stock_position, price, amount, operation):
         if stock_position['own'] - amount == 0:
             print("清仓！")
             stock_position['cost'] = 0
+            stock_position['operations'] += 1
         else:
-            stock_position['cost'] = (stock_position['cost'] * stock_position['own'] - price * amount) / (stock_position['own'] - amount)
+            stock_position['cost'] = (stock_position['cost'] * stock_position['own'] - price * amount * 0.9989 ) / (stock_position['own'] - amount)
         stock_position['own'] -= amount
         stock_position['use'] -= amount
-        stock_position['money'] += amount * price
+        stock_position['money'] += amount * price * 0.9989
+        stock_position['operations'] += 1
         # print("<<<===卖出成功！价格：%s，数量：%s，当前持仓：%s, 当前可用：%s, 价格成本：%s"%(price, amount, stock_position['own'], stock_position['use'], stock_position['cost']))
 
 
-def skip_oneday(stock_position):
-    stock_position['position'] = stock_position['own'] * stock_position['cost'] + stock_position['money']
+def skip_oneday(stock_position, close_price):
+    stock_position['close'] = close_price
+    stock_position['position'] = stock_position['own'] * stock_position['close'] + stock_position['money']
     stock_position['use'] = stock_position['own']
     stock_position['freeze'] = 0
+    stock_position['operations'] = 0
 
 
 def test():
     from Data import get_realtime_price
-    symbols = ["002164", "002517", "002457", "600723", "600918", "600720", "603187", "002271", "000759", "000735",
-              "601933"]
-    stock_names = ["宁波东力", "恺英网络", "青龙管业", "首商股份", "中泰证券", "祁连山", "海容冷链", "东方雨虹", "中百集团", "罗牛山", "永辉超市"]
+    # symbols = ["002164", "002517", "002457", "600723", "600918", "600720", "603187", "002271", "000759", "000735",
+    #           "601933"]
+    # stock_names = ["宁波东力", "恺英网络", "青龙管业", "首商股份", "中泰证券", "祁连山", "海容冷链", "东方雨虹", "中百集团", "罗牛山", "永辉超市"]
+    # symbols=["000725"]
+    symbols=["000759"]
+    # symbols=["601988"]
+    stock_names = ['中国银行']
     for symbol in symbols:
-        print("\n\n%s"%stock_names[symbols.index(symbol)])
-        date_price = get_realtime_price(symbol)
+        date_price = get_realtime_price(symbol, '5')
+        print(date_price[0])
         try:
             stock = {
-            'position': 10000 + date_price[0][1][0]*1000,
-            'money':10000,
+            'position': 30000 + date_price[0][1][0]*1000,
+            'money':30000,
             'own':1000,
             'use':1000,
             'freeze':0,
             'cost':date_price[0][1][0],
+            'close':date_price[0][1][0],
+            'operations':0
             }
         except KeyError as e:
             continue
-        print(stock)
+        print("\n\n%s"%stock_names[symbols.index(symbol)], stock)
         for day in date_price:
             price = day[1]
-            sell_price = 0
-            buy_price = 0
-            for idx in range(len(price) - 10):
-                data = price[:10+idx]
-                y2 = predict(data)
-                if y2[0] == 0:
-                    continue
-                if sell_price != 0 and price[10 + idx] >= sell_price:
-                    operate(stock, price[10 + idx], 100, 's')
-                    sell_price = 0
-                    continue
-                if buy_price != 0 and price[10 + idx] <= buy_price:
-                    operate(stock, price[10 + idx], 100, 'b')
-                    buy_price = 0
-                    continue
-                pre_max = max(y2[-20:])
-                pre_min = min(y2[-20:])
-                if pre_max >= price[10+idx] * 1.01 and pre_max > stock['cost']:
-                    operate(stock, price[10 + idx], 100, 'b')
-                    sell_price = pre_max
-                    continue
-                if pre_min * 1.01 <= price[10+idx] and pre_min < stock['cost']:
-                    operate(stock, price[10 + idx], 100, 's')
-                    buy_price = pre_min
-                    continue
-            skip_oneday(stock)
-            print(stock)
+            # sell_price = 0
+            # buy_price = 0
+            # for idx in range(len(price) - 10):
+            #     data = price[:10+idx]
+            #     y2 = predict(data)
+            #     if y2[0] == 0:
+            #         continue
+            #     if sell_price != 0 and price[10 + idx] >= sell_price:
+            #         operate(stock, price[10 + idx], 100, 's')
+            #         sell_price = 0
+            #         continue
+            #     if buy_price != 0 and price[10 + idx] <= buy_price:
+            #         operate(stock, price[10 + idx], 100, 'b')
+            #         buy_price = 0
+            #         continue
+            #     pre_max = max(y2[-20:])
+            #     pre_min = min(y2[-20:])
+            #     if pre_max >= price[10+idx] * 1.008 and pre_max > stock['cost']:
+            #         operate(stock, price[10 + idx], 100, 'b')
+            #         sell_price = pre_max
+            #         continue
+            #     if pre_min * 1.008 <= price[10+idx] and pre_min < stock['cost']:
+            #         operate(stock, price[10 + idx], 100, 's')
+            #         buy_price = pre_min
+            #         continue
+            # print(price)
+            operate_price = price[0]
+            buy = False
+            rate = 1.003
+            sell = False
+            for idx in range(len(price) - 5):
+                data = price[:5 + idx]
+                now_price = data[4 + idx]
+                # rate = (max(data) - min(data)) / 2 / data[0]
+                # # if rate == 0:
+                # #     rate = 1.003
+                # if idx == 0:
+                #     if now_price >= stock['close']:
+                #         buy = True
+                #         operate_price = min(data)
+                #     else:
+                #         sell = True
+                #         operate_price = max(data)
+
+                if not buy:
+                    if now_price <= operate_price:
+                        operate(stock, now_price, 200, 'b')
+                        buy = True
+                        sell = False
+                        operate_price = now_price * rate
+                        continue
+                if not sell:
+                    if now_price >= operate_price:
+                        operate(stock, now_price, 200, 's')
+                        sell = True
+                        buy = False
+                        operate_price = now_price / rate
+            print(day[0], stock)
+            skip_oneday(stock, price[-1])
+
 
 if __name__ == '__main__':
     test()

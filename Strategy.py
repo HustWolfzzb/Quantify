@@ -10,7 +10,8 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 from datetime import datetime, time, timedelta
-
+from Data import get_stock_basics, get_hist_data
+from Neo4j import get_Graph
 
 class simulation_User():
     balance = {
@@ -118,6 +119,41 @@ def nihe(data):
     return para_min_offset, func[func_min_offset], func_min_offset
 
 
+def filter():
+    para = ['open',
+             'high',
+             'close',
+             'low',
+             'volume',
+             'price_change',
+             'p_change',
+             'ma5',
+             'ma10',
+             'ma20',
+             'v_ma5',
+             'v_ma10',
+             'v_ma20',
+             'turnover']
+    graph = get_Graph()
+    roe = graph.run("MATCH (n) WHERE EXISTS(n.`净资产收益率(ROE)`) RETURN n.stock_id,n.name, n.`净资产收益率(ROE)`").data()
+    code_roe = { x['n.stock_id']:x for x in roe }
+    codes = list(get_stock_basics().index)
+    names = get_stock_basics()['name'].tolist()
+    for c in codes:
+        try:
+            if c[0]=='3':
+                continue
+            x = get_hist_data(c, '2020-07-28','2020-07-29')
+            if x.at['2020-07-29','close'] < x.at['2020-07-29','ma20'] and \
+                    float(x.at['2020-07-29','p_change']) < 3 and \
+                    float(code_roe[c]['n.`净资产收益率(ROE)`']) > 1:
+                print("%s, 二十日线：%s, 今日价格：%s, 今日涨幅：%s, ROE:%s" %
+                      (names[codes.index(c)], x.at['2020-07-29','ma20'],
+                       x.at['2020-07-29','close'], x.at['2020-07-29','p_change'],
+                       code_roe[c]['n.`净资产收益率(ROE)`'] ))
+        except Exception as e:
+                continue
+
 def main():
     # su = simulation_User()
     # user = User(su)
@@ -184,4 +220,5 @@ def main():
             print("持续上升中！！")
 
 if __name__ == '__main__':
-    main()
+    # main()
+    filter()

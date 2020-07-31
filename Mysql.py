@@ -87,30 +87,37 @@ def saveData(dataframe, code):
     executeSQL(connect, conn, insertSQL)
     closeSQL(connect, conn)
 
+connect, conn = connectSQL()
+existTables = [ x[0] for x in list(executeSQL(connect, conn, 'show tables;', True)) ]
+
 def updateData(code):
-    connect, conn = connectSQL()
-    existTables = list(executeSQL(connect, conn, 'show tables;', True))
-    if code not in existTables:
-        createTable(code)
-    getDateSQL = "select TIME from `" + code +"` order by TIME desc limit 1;"
-    lastestDate = executeSQL(connect, conn, getDateSQL, query=True)[0]
-    if len(lastestDate) < 10:
-        lastestDate = '2010-01-01'
-    # print(lastestDate)
-    dataframe = get_hist_data(code, str(lastestDate), str(datetime.date.today().isoformat()) )
-    insertSQL = []
-    for idx in dataframe.index[:-1]:
-        string = "insert into `%s`(TIME, " % code
-        for x in keys[:-1]:
-            string += (x + ', ')
-        string += keys[-1] + ") values( '%s', " % idx
-        for key in keys[:-1]:
-            string += (str(dataframe.at[idx, key]) + ', ')
-        string += str(dataframe.at[idx, keys[-1]]) + ') ON DUPLICATE KEY UPDATE;'
-        insertSQL.append(string)
-    # print(insertSQL[10])
-    executeSQL(connect, conn, insertSQL)
-    closeSQL(connect, conn)
+    try:
+        connect, conn = connectSQL()
+        if code not in existTables:
+            return
+            createTable(code)
+        getDateSQL = "select TIME from `" + code +"` order by TIME desc limit 1;"
+        lastestDate = executeSQL(connect, conn, getDateSQL, query=True)[0][0].isoformat()
+        if len(lastestDate) < 10:
+            lastestDate = '2010-01-01'
+        # print(lastestDate)
+        dataframe = get_hist_data(code, str(lastestDate), str(datetime.date.today().isoformat()) )
+        insertSQL = []
+        for idx in dataframe.index[:-1]:
+            string = "insert ignore into `%s`(TIME, " % code
+            for x in keys[:-1]:
+                string += (x + ', ')
+            string += keys[-1] + ") values( '%s', " % idx
+            for key in keys[:-1]:
+                string += (str(dataframe.at[idx, key]) + ', ')
+            string += str(dataframe.at[idx, keys[-1]]) + ') ;'
+            insertSQL.append(string)
+        # print(insertSQL[10])
+        executeSQL(connect, conn, insertSQL)
+        closeSQL(connect, conn)
+    except Exception as e:
+        print(e)
+
 
 
 def get_all_hushen_data(filename = 'stockName.xlsx'):
@@ -206,5 +213,5 @@ if __name__ == '__main__':
     # updateData('000018')
     # get_all_hushen_data()
     graph = Graph('http://localhost:11003', username='neo4j', password='zzb162122')
-    # update_all_hushen_data(graph)
-    get_all_hist_data_by_pro()
+    update_all_hushen_data(graph)
+    # get_all_hist_data_by_pro()
