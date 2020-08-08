@@ -169,7 +169,7 @@ def run(user, rate = 0.003, amount = 200):
     while (True):
         sleep(10)
         times += 1
-        if times > 20:
+        if times > 15:
             break
         # time = is_openMartket()
         # if time == -1:

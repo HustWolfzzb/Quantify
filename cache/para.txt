@@ -1,0 +1,1 @@
+{'复星医药': {'operate_price': 69.7, 'buy_rate': 0.009, 'amount': 200, 'sell_rate': 0.009, 'sell': 0, 'buy': 0, 'lock': 3}}
