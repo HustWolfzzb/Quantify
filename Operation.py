@@ -177,7 +177,8 @@ def run(user, rate = 0.003, amount = 200):
         sleep(10)
         # time = is_openMartket()
         # if time == -1:
-        #     break
+        #     sleep(120)
+        #         #     continue
         # if time == 0:
         #     sleep(120)
         #     continue
@@ -189,31 +190,25 @@ def run(user, rate = 0.003, amount = 200):
 
             now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
 
-            sell = para[stock_name]['sell']
-            buy = para[stock_name]['buy']
-            lock = para[stock_name]['lock']
-            sell_rate = para[stock_name]['sell_rate']
-            buy_rate = para[stock_name]['buy_rate']
-            operate_price = para[stock_name]['operate_price']
-
-            min_count = min(sell, buy)
-            if now_price > operate_price * (sell_rate + 1):
-                if abs(sell - buy) > lock and now_price < operate_price * (
-                        randint(lock, lock*2) * sell_rate + 1):
+            min_count = min(para[stock_name]['sell'], para[stock_name]['buy'])
+            if now_price > para[stock_name]['operate_price'] * (para[stock_name]['sell_rate'] + 1):
+                if abs(para[stock_name]['sell'] - para[stock_name]['buy']) > para[stock_name]['lock'] and now_price < para[stock_name]['operate_price'] * (
+                        randint(para[stock_name]['lock'], para[stock_name]['lock']*2) * para[stock_name]['sell_rate'] + 1):
                     continue
-                sell += 1
+                para[stock_name]['sell'] += 1
                 user.sell(symbol, now_price, amount)
-                operate_price = now_price
-                sell_rate *= (sell - min_count)
-            elif now_price * (1 + buy_rate) < operate_price:
-                if abs(sell - buy) > lock and now_price * (1 + randint(lock // 2, lock) * buy_rate) > operate_price:
+                para[stock_name]['operate_price'] = now_price
+                para[stock_name]['sell_rate'] *= (para[stock_name]['sell'] - min_count)
+
+            if now_price * (1 + para[stock_name]['buy_rate']) < para[stock_name]['operate_price']:
+                if abs(para[stock_name]['sell'] - para[stock_name]['buy']) > para[stock_name]['lock'] and now_price * (1 + randint(para[stock_name]['lock'] // 2, para[stock_name]['lock']) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
                     continue
-                buy += 1
+                para[stock_name]['buy'] += 1
                 user.buy(symbol, now_price, amount)
-                operate_price = now_price
-                buy_rate *= (buy - min_count)
-            else:
-                print("Nothing Happened")
+                para[stock_name]['operate_price'] = now_price
+                para[stock_name]['buy_rate'] *= (para[stock_name]['buy'] - min_count)
+
+            print("10S 过去了~ ")
 
 
 
