@@ -155,7 +155,7 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
 
 
 def run(user, rate = 0.003, amount = 200):
-    with open('cache/para.txt','r') as f:
+    with open('cache/para.txt','r', encoding='utf8') as f:
         para = eval(f.read())
     stocks = user.stock.get_position()
     symbols = []
@@ -167,7 +167,7 @@ def run(user, rate = 0.003, amount = 200):
 
     times = 1
     while (True):
-        sleep(10)
+        sleep(1)
         times += 1
         if times > 15:
             break
@@ -183,9 +183,7 @@ def run(user, rate = 0.003, amount = 200):
         for symbol_idx in range(len(symbols)):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
-
             now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
-
             min_count = min(para[stock_name]['sell'], para[stock_name]['buy'])
             if now_price > para[stock_name]['operate_price'] * (para[stock_name]['sell_rate'] + 1):
                 if abs(para[stock_name]['sell'] - para[stock_name]['buy']) > para[stock_name]['lock'] and now_price < para[stock_name]['operate_price'] * (
@@ -204,8 +202,7 @@ def run(user, rate = 0.003, amount = 200):
                 para[stock_name]['operate_price'] = now_price
                 para[stock_name]['buy_rate'] *= (para[stock_name]['buy'] - min_count)
 
-            print("10S 过去了~ ")
-    with open('cache/para.txt', 'w') as f:
+    with open('cache/para.txt', 'w', encoding='utf8') as f:
         f.write(str(para))
 
 
