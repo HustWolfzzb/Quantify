@@ -32,6 +32,8 @@ def get_realtime_price(code='sh', ktype='5'):
             date_prices[date] = [float(time_price.at[x, 'open'])]
         else:
             date_prices[date].append(float(time_price.at[x, 'open']))
+    for s in date_prices.keys():
+        date_prices[s].reverse()
     return sorted(date_prices.items(),key=lambda date_prices:date_prices[0],reverse=False)
 
 
