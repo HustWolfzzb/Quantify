@@ -63,7 +63,7 @@ class User():
 
     def show(self):
         print("资金余额：%s\n可用资金：%s\n可取金额：%s\n总资产：%s"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan))
-        print("当前持仓股票:\n", self.stock)
+        print("当前持仓股票:\n", self.user.position)
 
 
 class Stock():
@@ -72,12 +72,8 @@ class Stock():
 
     def get_position(self):
         return self.position
+
+
 if __name__ == '__main__':
     myAccount = User(user)
     myAccount.show()
-	# main()
-	# os.system('python3 Mysql.py')
-	# os.system('python3 Neo4j.py')
-	# os.system('python3 Strategy.py')
-	# os.system('python3 Operation.py')
-	# os.system('python3 Data.py')
