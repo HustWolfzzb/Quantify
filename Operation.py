@@ -5,6 +5,8 @@ import tushare as ts
 from datetime import datetime, time, timedelta
 from time import sleep
 import numpy as np
+
+from HaiTong import get_Account
 from Strategy import nihe
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30
@@ -17,6 +19,9 @@ AFTERNOON_END = time(15, 00)
 symbol = ["002164","002517","002457","600723","600918","600720","603187","002271","000759","000735","601933"]
 stock_name =["宁波东力","恺英网络","青龙管业","首商股份","中泰证券","祁连山","海容冷链","东方雨虹","中百集团","罗牛山","永辉超市"]
 stock_code = { symbol[x]:stock_name[x] for x in range(len(symbol))}
+from Data import get_realtime_price
+
+
 def is_openMartket():
     current_time = datetime.now().time()
     if not ((current_time > DAY_START and current_time < AFTERNOON_END )):
@@ -133,20 +138,15 @@ def skip_oneday(stock_position, close_price, record):
 
 
 
+
 def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
-    from Data import get_realtime_price
-    # symbols = ["002164", "002517", "002457", "600723", "600918", "600720", "603187", "002271", "000759", "000735",
-    #           "601933"]
-    # stock_names = ["宁波东力", "恺英网络", "青龙管业", "首商股份", "中泰证券", "祁连山", "海容冷链", "东方雨虹", "中百集团", "罗牛山", "永辉超市"]
     record = []
     for symbol_idx in range(len(symbols)):
         symbol = symbols[symbol_idx]
         stock_name = stock_names[symbol_idx]
         date_price = get_realtime_price(symbol, '5')
-        # date_price = [{'2020-07-20':[7.95, 7.95, 7.95, 7.95, 7.95, 7.95, 7.91, 7.87, 7.62, 7.6, 7.62, 7.61, 7.65, 7.6, 7.66, 7.61, 7.61, 7.68, 7.64, 7.59, 7.56, 7.61, 7.56, 7.67, 7.67, 7.67, 7.67, 7.67, 7.67, 7.68, 7.73, 7.75, 7.79, 7.79, 7.79, 7.75, 7.74, 7.75, 7.71, 7.82, 7.8, 7.89, 7.85, 7.91, 7.89, 7.92, 7.88, 7.95]}]
-        # print(date_price[0])
-        try:
 
+        try:
             start_price = date_price[0][1][0]
             init_money = start_price * 0.8
             start_own = 900
@@ -164,29 +164,28 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
                 '总资金增长率': 0,
                 '股价波动率': 0
             }
+
         except KeyError as e:
             print(e)
-        # rate = 0.005
         buy_rate = rate
         sell_rate = rate
         sell = 0
         buy = 0
-        # amount = 200
-        lock = 3
+        lock = 5
         operate_price = date_price[0][1][0]
         for day in date_price:
             price = day[1]
             for now_price in price[1:]:
                 min_count = min(sell, buy)
                 if now_price > operate_price * (sell_rate+1):
-                    if abs(sell - buy) > lock and now_price > operate_price * (randint(lock//2, lock) * sell_rate+1):
+                    if abs(sell - buy) > lock and now_price < operate_price * (randint(lock//2, lock) * sell_rate+1):
                         continue
                     sell += 1
                     operate(stock, now_price, amount, 's', record)
                     operate_price = now_price
                     sell_rate *= (sell - min_count)
                 if now_price * (1+buy_rate) < operate_price:
-                    if abs(sell - buy) > lock and now_price * (1 + randint(lock//2, lock) * buy_rate) < operate_price:
+                    if abs(sell - buy) > lock and now_price * (1 + randint(lock//2, lock) * buy_rate) > operate_price:
                         continue
                     buy += 1
                     operate(stock, now_price, amount, 'b', record)
@@ -200,6 +199,69 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
                 pass
         # print(stock_name, ":", stock, '\n')
     return stock, record
+
+
+def run(user, rate = 0.003, amount = 200):
+    para = {
+        '复星医药':{
+            'operate_price' : 69.70,
+            'buy_rate' : rate,
+            'sell_rate' : rate,
+            'sell' : 0,
+            'buy' : 0,
+            'lock' : 3,
+        },
+    }
+    stocks = user.stock.get_position()
+    symbols = []
+    stock_names = []
+    for s in range(len(stocks)):
+        symbols.append(stocks[s]['证券代码'])
+        stock_names.append(stocks[s]['证券名称'])
+
+    while (True):
+        # time = is_openMartket()
+        # if time == -1:
+        #     break
+        # if time == 0:
+        #     sleep(120)
+        #     continue
+        # else:
+        #     sleep(120)
+        for symbol_idx in range(len(symbols)):
+            symbol = symbols[symbol_idx]
+            stock_name = stock_names[symbol_idx]
+
+            now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
+
+            sell = para[stock_name]['sell']
+            buy = para[stock_name]['buy']
+            lock = para[stock_name]['lock']
+            sell_rate = para[stock_name]['sell_rate']
+            buy_rate = para[stock_name]['buy_rate']
+            operate_price = para[stock_name]['operate_price']
+
+            min_count = min(sell, buy)
+            if now_price > operate_price * (sell_rate + 1):
+                if abs(sell - buy) > lock and now_price < operate_price * (
+                        randint(lock, lock*2) * sell_rate + 1):
+                    continue
+                sell += 1
+                user.sell(symbol, now_price, amount)
+                operate_price = now_price
+                sell_rate *= (sell - min_count)
+            elif now_price * (1 + buy_rate) < operate_price:
+                if abs(sell - buy) > lock and now_price * (1 + randint(lock // 2, lock) * buy_rate) > operate_price:
+                    continue
+                buy += 1
+                user.buy(symbol, now_price, amount)
+                operate_price = now_price
+                buy_rate *= (buy - min_count)
+            else:
+                print("Nothing Happened")
+            print(stock_name, ":", stock, '\n')
+
+
 
 if __name__ == '__main__':
     symbols = [
@@ -264,3 +326,5 @@ if __name__ == '__main__':
         print("\n最优横跳率:%s, 最优每次横跳手数:%s"%(Max_rate, Max_amount), '\n', stock_name[0], Max_stock, "\n\n")
         for item in Max_record:
             print(item)
+
+    run(get_Account())

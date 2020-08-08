@@ -2,6 +2,9 @@ import easytrader
 import time
 import tushare as ts
 import datetime
+
+from Operation import is_openMartket
+
 user = easytrader.use('htzq_client')
 user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.prepare(user='张照博', password='379926', comm_password='379926')
@@ -35,6 +38,7 @@ class User():
         self.ke_yong_jin_e = user.balance['可用金额']
         self.ke_qu_jin_e = user.balance['可取金额']
         self.zong_zi_chan = user.balance['总资产']
+        self.can_koa_ying_kui = user.balance['股份参考盈亏']
         self.stock = Stock(user.position)
 
     def buy(self, code, price, amount):
@@ -45,8 +49,6 @@ class User():
         elif price > price_now :
             price = price_now
         print(self.user.buy(code, price, amount))
-
-
 
     def sell(self, code, price, amount):
         data = ts.get_realtime_quotes(code)
@@ -61,9 +63,19 @@ class User():
                     amount = ss['可用余额']
         self.user.buy(code, price, amount)
 
+
+    def user_refresh(self):
+        self.user.refresh()
+
+    def get_today_trades(self):
+        return self.user.today_trades
+
+    def get_today_entrusts(self):
+        return self.user.today_entrusts
+
     def show(self):
-        print("资金余额：%s\n可用资金：%s\n可取金额：%s\n总资产：%s"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan))
-        print("当前持仓股票:\n", self.user.position)
+        print("资金余额：%s\n可用资金：%s\n可取金额：%s\n总资产：%s\n股份参考盈亏：%s"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan,self.can_koa_ying_kui))
+        print("当前持仓股票:\n", self.stock.get_position())
 
 
 class Stock():
@@ -72,6 +84,10 @@ class Stock():
 
     def get_position(self):
         return self.position
+
+
+def get_Account():
+    return User(user)
 
 
 if __name__ == '__main__':
