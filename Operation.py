@@ -155,16 +155,8 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
 
 
 def run(user, rate = 0.003, amount = 200):
-    para = {
-        '复星医药':{
-            'operate_price' : 69.70,
-            'buy_rate' : rate,
-            'sell_rate' : rate,
-            'sell' : 0,
-            'buy' : 0,
-            'lock' : 3,
-        },
-    }
+    with open('cache/para.txt','r') as f:
+        para = eval(f.read())
     stocks = user.stock.get_position()
     symbols = []
     stock_names = []
@@ -173,8 +165,12 @@ def run(user, rate = 0.003, amount = 200):
         symbols.append(stocks[s]['证券代码'])
         stock_names.append(stocks[s]['证券名称'])
 
+    times = 1
     while (True):
         sleep(10)
+        times += 1
+        if times > 10:
+            break
         # time = is_openMartket()
         # if time == -1:
         #     sleep(120)
@@ -196,7 +192,7 @@ def run(user, rate = 0.003, amount = 200):
                         randint(para[stock_name]['lock'], para[stock_name]['lock']*2) * para[stock_name]['sell_rate'] + 1):
                     continue
                 para[stock_name]['sell'] += 1
-                user.sell(symbol, now_price, amount)
+                user.sell(symbol, now_price, para[stock_name]['amount'])
                 para[stock_name]['operate_price'] = now_price
                 para[stock_name]['sell_rate'] *= (para[stock_name]['sell'] - min_count)
 
@@ -204,12 +200,13 @@ def run(user, rate = 0.003, amount = 200):
                 if abs(para[stock_name]['sell'] - para[stock_name]['buy']) > para[stock_name]['lock'] and now_price * (1 + randint(para[stock_name]['lock'] // 2, para[stock_name]['lock']) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
                     continue
                 para[stock_name]['buy'] += 1
-                user.buy(symbol, now_price, amount)
+                user.buy(symbol, now_price, para[stock_name]['amount'])
                 para[stock_name]['operate_price'] = now_price
                 para[stock_name]['buy_rate'] *= (para[stock_name]['buy'] - min_count)
 
             print("10S 过去了~ ")
-
+    with open('cache/para.txt', 'w') as f:
+        f.write(str(para))
 
 
 if __name__ == '__main__':
