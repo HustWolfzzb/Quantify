@@ -50,53 +50,6 @@ def predict(data):
 
 
 
-def main():
-    tick_data = {}
-    for s in symbol:
-        tick_data[s] = []
-    while(True):
-        time = is_openMartket()
-        if time == -1:
-            break
-        if time == 0:
-            sleep(120)
-            continue
-        else:
-            sleep(120)
-        realtimeData = list(ts.get_realtime_quotes(symbol).price)
-        print(datetime.now().isoformat().replace('T', "  "))
-        try:
-            for idx in range(len(realtimeData)):
-                data = tick_data[symbol[idx]]
-                data.append(realtimeData[idx])
-                if len(data) < 8:
-                    sleep(int(120/len(symbol)))
-                    continue
-                y2 = predict(data)
-                if y2[0] == 0:
-                    continue
-                if max(y2) != y2[-1]:
-                    max_y2 = max(y2)
-                    for x in range(len(y2[-20:])):
-                        if y2[-20+x] == max_y2:
-                            print("%s 卖出点在：%s, 时间为：%s" %(symbol[idx], max_y2, datetime.now() + timedelta(minutes=2*x)))
-                elif min(y2) != y2[-1]:
-                    min_y2 = min(y2)
-                    for x in range(len(y2[-20:])):
-                        if y2[-20 + x] == min_y2:
-                            print("%s 买入点在：%s, 时间为：%s" % (symbol[idx], min_y2, datetime.now() + timedelta(minutes=2 * x)))
-                else:
-                    if max(y2) < y2[len(data)]:
-                        print("%s持续下行中！！"%symbol[idx])
-                    else:
-                        print("%s 持续上升中！！" % symbol[idx])
-        except Exception as e:
-            print(e)
-    # for s in symbol:
-    #     with open('tickData/%s-%s.txt'%(stock_code[s],s), 'a', encoding='utf8') as out:
-    #         out.write("时间：%s\n"%datetime.now().isoformat())
-    #         out.write(", ".join(tick_data[s]))
-    #         out.write("\n")
 
 def operate(stock_position, price, amount, operation, record):
     if operation == 'b':
@@ -215,11 +168,13 @@ def run(user, rate = 0.003, amount = 200):
     stocks = user.stock.get_position()
     symbols = []
     stock_names = []
+    print(stocks)
     for s in range(len(stocks)):
         symbols.append(stocks[s]['证券代码'])
         stock_names.append(stocks[s]['证券名称'])
 
     while (True):
+        sleep(10)
         # time = is_openMartket()
         # if time == -1:
         #     break
@@ -259,7 +214,6 @@ def run(user, rate = 0.003, amount = 200):
                 buy_rate *= (buy - min_count)
             else:
                 print("Nothing Happened")
-            print(stock_name, ":", stock, '\n')
 
 
 
