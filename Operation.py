@@ -2,15 +2,17 @@ from random import random, randint
 
 import tushare as ts
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, date
 from time import sleep
 import numpy as np
 
-from HaiTong import get_Account
+# from HaiTong import get_Account
 from Strategy import nihe
+from Data import get_realtime_price, get_pro
+
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30
-DAY_START = time(9, 30)
+MORNING_START = time(9, 30)
 DAY_END = time(11, 30)
 
 AFTERNOON_START = time(13, 00)
@@ -19,14 +21,17 @@ AFTERNOON_END = time(15, 00)
 symbol = ["002164","002517","002457","600723","600918","600720","603187","002271","000759","000735","601933"]
 stock_name =["宁波东力","恺英网络","青龙管业","首商股份","中泰证券","祁连山","海容冷链","东方雨虹","中百集团","罗牛山","永辉超市"]
 stock_code = { symbol[x]:stock_name[x] for x in range(len(symbol))}
-from Data import get_realtime_price
 
 
 def is_openMartket():
+    today_date = str(date.today().isoformat()).replace('-', '')
+    is_open = list(get_pro().query('trade_cal', start_date=today_date, end_date=today_date).is_open)[0]
+    if is_open == 0:
+        return -2
     current_time = datetime.now().time()
-    if not ((current_time > DAY_START and current_time < AFTERNOON_END )):
+    if not ((current_time > MORNING_START and current_time < AFTERNOON_END )):
         return -1
-    elif not ((current_time > DAY_START and current_time < DAY_END) or (current_time >AFTERNOON_START and current_time < AFTERNOON_END )):
+    elif not ((current_time > MORNING_START and current_time < DAY_END) or (current_time >AFTERNOON_START and current_time < AFTERNOON_END )):
         return 0
     return 1
 
@@ -54,6 +59,7 @@ def predict(data):
 def operate(stock_position, price, amount, operation, record):
     if operation == 'b':
         if stock_position['可用余额'] < amount * price:
+            record.append("资金不足")
             return
         stock_position['当前成本'] = (stock_position['当前成本'] * stock_position['持有股份'] + price * amount * 1.0001 ) / (stock_position['持有股份']  + amount)
         stock_position['持有股份'] += amount
@@ -97,12 +103,12 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
     for symbol_idx in range(len(symbols)):
         symbol = symbols[symbol_idx]
         stock_name = stock_names[symbol_idx]
-        date_price = get_realtime_price(symbol, '5')
+        date_price = get_realtime_price(symbol, '15')
 
         try:
             start_price = date_price[0][1][0]
-            init_money = start_price * 0.8
-            start_own = 900
+            init_money = start_price * 2000
+            start_own = 2000
             stock = {
                 '初始资金': init_money + start_price * start_own,
                 '当前资金': init_money + start_price * start_own,
@@ -124,26 +130,46 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
         sell_rate = rate
         sell = 0
         buy = 0
-        lock = 5
+        lock = 3
         operate_price = date_price[0][1][0]
+        sell_record = []
+        buy_record = []
         for day in date_price:
             price = day[1]
             for now_price in price[1:]:
                 min_count = min(sell, buy)
-                if now_price > operate_price * (sell_rate+1):
-                    if abs(sell - buy) > lock and now_price < operate_price * (randint(lock//2, lock) * sell_rate+1):
+                if now_price > operate_price * (sell_rate + 1):
+                    if sell - buy > lock and now_price < operate_price * (randint(lock, 2 * lock) * sell_rate + 1):
                         continue
+                    if len(buy_record) > 0:
+                        if now_price > buy_record[-1]:
+                            buy_record.pop()
+                        else:
+                            continue
                     sell += 1
                     operate(stock, now_price, amount, 's', record)
                     operate_price = now_price
-                    sell_rate *= (sell - min_count)
-                if now_price * (1+buy_rate) < operate_price:
-                    if abs(sell - buy) > lock and now_price * (1 + randint(lock//2, lock) * buy_rate) > operate_price:
+                    if sell - min_count == 0:
+                        sell_rate = rate
                         continue
+                    sell_rate = rate * (sell - min_count)
+                    sell_record.append(now_price)
+                if now_price * (1 + buy_rate) < operate_price:
+                    if buy - sell > lock and now_price * (1 + randint(lock, 2 * lock) * buy_rate) > operate_price:
+                        continue
+                    if len(sell_record) > 0:
+                        if now_price < sell_record[-1]:
+                            sell_record.pop()
+                        else:
+                            continue
                     buy += 1
                     operate(stock, now_price, amount, 'b', record)
                     operate_price = now_price
-                    buy_rate *= (buy - min_count)
+                    if (buy - min_count) == 0:
+                        buy_rate = rate
+                        continue
+                    buy_rate = rate * (buy - min_count)
+                    buy_record.append(now_price)
             stock['最新价格'] = price[-1]
             kaishi = len(record)
             skip_oneday(stock, price[-1], record)
@@ -167,41 +193,60 @@ def run(user, rate = 0.003, amount = 200):
 
     times = 1
     while (True):
-        sleep(1)
         times += 1
         if times > 15:
             break
-        # time = is_openMartket()
-        # if time == -1:
-        #     sleep(120)
-        #         #     continue
-        # if time == 0:
-        #     sleep(120)
-        #     continue
-        # else:
-        #     sleep(120)
+        time = is_openMartket()
+        if time == -1:
+            sleep(300)
+            continue
+        elif time == -2:
+            sleep(1800)
+            continue
+        elif time == 0:
+            sleep(120)
+            continue
+
         for symbol_idx in range(len(symbols)):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
             now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
             min_count = min(para[stock_name]['sell'], para[stock_name]['buy'])
             if now_price > para[stock_name]['operate_price'] * (para[stock_name]['sell_rate'] + 1):
-                if abs(para[stock_name]['sell'] - para[stock_name]['buy']) > para[stock_name]['lock'] and now_price < para[stock_name]['operate_price'] * (
-                        randint(para[stock_name]['lock'], para[stock_name]['lock']*2) * para[stock_name]['sell_rate'] + 1):
+                if para[stock_name]['sell'] - para[stock_name]['buy'] > para[stock_name]['lock'] \
+                        and now_price < para[stock_name]['operate_price'] * (randint(para[stock_name]['lock'], para[stock_name]['lock'] * 2) * para[stock_name]['sell_rate'] + 1):
                     continue
+                if len(para[stock_name]['buy_record']) > 0:
+                    if now_price < para[stock_name]['buy_record'][-1]:
+                        para[stock_name]['buy_record'].pop()
+                    else:
+                        continue
                 para[stock_name]['sell'] += 1
                 user.sell(symbol, now_price, para[stock_name]['amount'])
                 para[stock_name]['operate_price'] = now_price
-                para[stock_name]['sell_rate'] *= (para[stock_name]['sell'] - min_count)
-
-            if now_price * (1 + para[stock_name]['buy_rate']) < para[stock_name]['operate_price']:
-                if abs(para[stock_name]['sell'] - para[stock_name]['buy']) > para[stock_name]['lock'] and now_price * (1 + randint(para[stock_name]['lock'] // 2, para[stock_name]['lock']) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
+                if (para[stock_name]['sell'] - min_count) == 0:
+                    para[stock_name]['sell_rate'] = rate
                     continue
+                para[stock_name]['sell_rate'] = rate * (para[stock_name]['sell'] - min_count)
+                para[stock_name]['sell_record'].append(now_price)
+            if now_price * (1 + para[stock_name]['buy_rate']) < para[stock_name]['operate_price']:
+                if para[stock_name]['sell'] - para[stock_name]['buy'] > para[stock_name]['lock'] \
+                        and now_price * (1 + randint(para[stock_name]['lock'] // 2, para[stock_name]['lock']) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
+                    continue
+                if len(para[stock_name]['sell_record']) > 0:
+                    if now_price < para[stock_name]['sell_record'][-1]:
+                        para[stock_name]['sell_record'].pop()
+                    else:
+                        continue
                 para[stock_name]['buy'] += 1
                 user.buy(symbol, now_price, para[stock_name]['amount'])
                 para[stock_name]['operate_price'] = now_price
-                para[stock_name]['buy_rate'] *= (para[stock_name]['buy'] - min_count)
-
+                if (para[stock_name]['buy'] - min_count) == 0:
+                    para[stock_name]['buy_rate'] = rate
+                    continue
+                para[stock_name]['buy_rate'] = rate * (para[stock_name]['buy'] - min_count)
+                para[stock_name]['buy_record'].append(now_price)
+        sleep(120)
     with open('cache/para.txt', 'w', encoding='utf8') as f:
         f.write(str(para))
 
@@ -250,15 +295,15 @@ if __name__ == '__main__':
     for idx in range(len(symbols)):
         symbol = [symbols[idx]]
         stock_name = [stock_names[idx]]
-        if stock_name[0] != '复星医药':
+        if stock_name[0] != '中百集团':
             continue
         Max_stock = None
         profit = -1
         Max_rate = 0
         Max_amount = 0
         Max_record = []
-        for rate in range(2,10):
-            for amount in range(0,3):
+        for rate in range(2,8):
+            for amount in range(0,5):
                 stock , record= test((rate+2) * 0.001, (amount + 1) * 100, symbol, stock_name)
                 if stock['总资金增长率'] > profit:
                     profit = stock['总资金增长率']
@@ -270,4 +315,4 @@ if __name__ == '__main__':
         for item in Max_record:
             print(item)
 
-    run(get_Account())
+    # run(get_Account())
