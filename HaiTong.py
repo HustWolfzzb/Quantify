@@ -43,10 +43,7 @@ class User():
     def buy(self, code, price, amount):
         data = ts.get_realtime_quotes(code)
         price_now = data.at[0, 'price']
-        if price < price_now and price/price_now > 0.995:
-            price = price_now
-        elif price > price_now :
-            price = price_now
+        price = price_now
         print(self.user.buy(code, price, amount))
 
     def sell(self, code, price, amount):

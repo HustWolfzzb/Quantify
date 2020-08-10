@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta, date
 from time import sleep
 import numpy as np
 
-# from HaiTong import get_Account
+from HaiTong import get_Account
 from Strategy import nihe
 from Data import get_realtime_price, get_pro
 
@@ -191,22 +191,20 @@ def run(user, rate = 0.003, amount = 200):
         symbols.append(stocks[s]['证券代码'])
         stock_names.append(stocks[s]['证券名称'])
 
-    times = 1
+    # times = 1
     while (True):
-        times += 1
-        if times > 15:
-            break
+        # times += 1
+        # if times > 15:
+        #     break
         time = is_openMartket()
         if time == -1:
-            sleep(300)
+            sleep(120)
             continue
         elif time == -2:
-            sleep(1800)
-            continue
+            break
         elif time == 0:
             sleep(120)
             continue
-
         for symbol_idx in range(len(symbols)):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
@@ -222,7 +220,10 @@ def run(user, rate = 0.003, amount = 200):
                     else:
                         continue
                 para[stock_name]['sell'] += 1
-                user.sell(symbol, now_price, para[stock_name]['amount'])
+                try:
+                    user.sell(symbol, now_price, para[stock_name]['amount'])
+                except Exception as e:
+                    print(e)
                 para[stock_name]['operate_price'] = now_price
                 if (para[stock_name]['sell'] - min_count) == 0:
                     para[stock_name]['sell_rate'] = rate
@@ -239,7 +240,10 @@ def run(user, rate = 0.003, amount = 200):
                     else:
                         continue
                 para[stock_name]['buy'] += 1
-                user.buy(symbol, now_price, para[stock_name]['amount'])
+                try:
+                    user.buy(symbol, now_price, para[stock_name]['amount'])
+                except Exception as e:
+                    print(e)
                 para[stock_name]['operate_price'] = now_price
                 if (para[stock_name]['buy'] - min_count) == 0:
                     para[stock_name]['buy_rate'] = rate
@@ -315,4 +319,4 @@ if __name__ == '__main__':
         for item in Max_record:
             print(item)
 
-    # run(get_Account())
+    run(get_Account())
