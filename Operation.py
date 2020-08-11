@@ -22,9 +22,9 @@ stock_name =["宁波东力","恺英网络","青龙管业","首商股份","中泰
 stock_code = { symbol[x]:stock_name[x] for x in range(len(symbol))}
 
 
-def is_openMartket():
+def is_openMartket(pro):
     today_date = str(date.today().isoformat()).replace('-', '')
-    is_open = list(get_pro().query('trade_cal', start_date=today_date, end_date=today_date).is_open)[0]
+    is_open = list(pro.query('trade_cal', start_date=today_date, end_date=today_date).is_open)[0]
     if is_open == 0:
         return -2
     current_time = datetime.now().time()
@@ -228,12 +228,13 @@ def can_I_go(record, price, type):
         return False
 
 
-def run(user, rate = 0.01, amount = 200):
+def run(user, rate = 0.01, amount = 100):
     with open('cache/lock_para.txt','r', encoding='utf8') as f:
         para = eval(f.read())
     stocks = user.stock.get_position()
     symbols = []
     stock_names = []
+    pro = get_pro()
     print(stocks)
     for s in range(len(stocks)):
         symbols.append(stocks[s]['证券代码'])
@@ -244,7 +245,7 @@ def run(user, rate = 0.01, amount = 200):
         # times += 1
         # if times > 15:
         #     break
-        time = is_openMartket()
+        time = is_openMartket(pro)
         if time == -1:
             sleep(120)
             continue
@@ -257,16 +258,20 @@ def run(user, rate = 0.01, amount = 200):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
             now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
-            para[stock_name]['sell_rate'] = cal_rate_times(para[stock_name]['record'], 0)
-            para[stock_name]['buy_rate'] = cal_rate_times(para[stock_name]['record'], 1)
+
+            sell_times = cal_rate_times(para[stock_name]['record'], 0)
+            buy_times = cal_rate_times(para[stock_name]['record'], 1)
+
+            para[stock_name]['sell_rate'] = sell_times * rate
+            para[stock_name]['buy_rate'] = buy_times * rate
             if now_price > para[stock_name]['operate_price'] * (para[stock_name]['sell_rate'] + 1):
                 if para[stock_name]['sell'] - para[stock_name]['buy'] > para[stock_name]['lock'] \
                         and now_price < para[stock_name]['operate_price'] * (randint(para[stock_name]['lock'], para[stock_name]['lock'] * 2) * para[stock_name]['sell_rate'] + 1):
                     continue
-                if not can_I_go(para[stock_name]['record'],now_price, 0):
+                if not can_I_go(para[stock_name]['record'], now_price, 0):
                     continue
                 try:
-                    user.sell(symbol, now_price, para[stock_name]['amount'])
+                    user.sell(symbol, now_price, para[stock_name]['amount'] * (sell_times + 1) // 2)
                     yue += now_price * para[stock_name]['amount']
                     para[stock_name]['sell'] += 1
                     para[stock_name]['operate_price'] = now_price
@@ -277,14 +282,14 @@ def run(user, rate = 0.01, amount = 200):
                 if para[stock_name]['sell'] - para[stock_name]['buy'] > para[stock_name]['lock'] \
                         and now_price * (1 + randint(para[stock_name]['lock'], para[stock_name]['lock'] * 2) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
                     continue
-                if not can_I_go(para[stock_name]['record'],now_price, 1):
+                if not can_I_go(para[stock_name]['record'], now_price, 1):
                     continue
 
                 try:
                     if yue < now_price * para[stock_name]['amount']:
                         print("没钱了", end='~~~')
                         continue
-                    user.buy(symbol, now_price, para[stock_name]['amount'])
+                    user.buy(symbol, now_price, para[stock_name]['amount'] * (buy_times + 1) // 2)
                     para[stock_name]['buy'] += 1
                     yue -= now_price * para[stock_name]['amount']
                     para[stock_name]['operate_price'] = now_price
