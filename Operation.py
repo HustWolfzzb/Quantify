@@ -6,7 +6,6 @@ from datetime import datetime, time, timedelta, date
 from time import sleep
 import numpy as np
 
-from HaiTong import get_Account
 from Strategy import nihe
 from Data import get_realtime_price, get_pro
 
@@ -107,6 +106,7 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
 
         try:
             start_price = date_price[0][1][0]
+            # start_price = 68.7
             init_money = start_price * 2000
             start_own = 2000
             stock = {
@@ -130,7 +130,8 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
         sell_rate = rate
         sell = 0
         buy = 0
-        lock = 3
+        lock = 1
+        # operate_price = 68.7
         operate_price = date_price[0][1][0]
         sell_record = []
         buy_record = []
@@ -139,7 +140,8 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
             for now_price in price[1:]:
                 min_count = min(sell, buy)
                 if now_price > operate_price * (sell_rate + 1):
-                    if sell - buy > lock and now_price < operate_price * (randint(lock, 2 * lock) * sell_rate + 1):
+                    if sell - buy > lock :
+                    # if sell - buy > lock and now_price < operate_price * (randint(lock, 2 * lock) * sell_rate + 1):
                         continue
                     if len(buy_record) > 0:
                         if now_price > buy_record[-1]:
@@ -155,7 +157,8 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
                     sell_rate = rate * (sell - min_count)
                     sell_record.append(now_price)
                 if now_price * (1 + buy_rate) < operate_price:
-                    if buy - sell > lock and now_price * (1 + randint(lock, 2 * lock) * buy_rate) > operate_price:
+                    if buy - sell > lock :
+                    # if buy - sell > lock and now_price * (1 + randint(lock, 2 * lock) * buy_rate) > operate_price:
                         continue
                     if len(sell_record) > 0:
                         if now_price < sell_record[-1]:
@@ -180,8 +183,53 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
     return stock, record
 
 
-def run(user, rate = 0.003, amount = 200):
-    with open('cache/para.txt','r', encoding='utf8') as f:
+def cal_rate_times(record, type):
+    record_type = [ x['Type'] for x in record[-1::-1] ]
+    times = 1
+    if len(record_type) != 0:
+        while record_type[times - 1] == type:
+            times += 1
+    return times
+
+
+def can_I_go(record, price, type):
+    re_price = 0
+    if type == 0:
+        buy = 0
+        sell = 1
+        for rec in record[-1::-1]:
+            if sell == buy:
+                re_price = rec['price']
+                if re_price < price:
+                    return True
+                else:
+                    return False
+            if rec['Type'] == 0:
+                sell += 1
+            elif rec['Type'] == 1:
+                buy += 1
+    elif type == 1:
+        buy = 1
+        sell = 0
+        for rec in record[-1::-1]:
+            if sell == buy:
+                re_price = rec['price']
+                if re_price > price:
+                    return True
+                else:
+                    return False
+            if rec['Type'] == 0:
+                sell += 1
+            elif rec['Type'] == 1:
+                buy += 1
+    if re_price == 0:
+        return True
+    else:
+        return False
+
+
+def run(user, rate = 0.01, amount = 200):
+    with open('cache/lock_para.txt','r', encoding='utf8') as f:
         para = eval(f.read())
     stocks = user.stock.get_position()
     symbols = []
@@ -190,7 +238,7 @@ def run(user, rate = 0.003, amount = 200):
     for s in range(len(stocks)):
         symbols.append(stocks[s]['证券代码'])
         stock_names.append(stocks[s]['证券名称'])
-
+    yue = user.balance['可用金额']
     # times = 1
     while (True):
         # times += 1
@@ -209,49 +257,42 @@ def run(user, rate = 0.003, amount = 200):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
             now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
-            min_count = min(para[stock_name]['sell'], para[stock_name]['buy'])
+            para[stock_name]['sell_rate'] = cal_rate_times(para[stock_name]['record'], 0)
+            para[stock_name]['buy_rate'] = cal_rate_times(para[stock_name]['record'], 1)
             if now_price > para[stock_name]['operate_price'] * (para[stock_name]['sell_rate'] + 1):
                 if para[stock_name]['sell'] - para[stock_name]['buy'] > para[stock_name]['lock'] \
                         and now_price < para[stock_name]['operate_price'] * (randint(para[stock_name]['lock'], para[stock_name]['lock'] * 2) * para[stock_name]['sell_rate'] + 1):
                     continue
-                if len(para[stock_name]['buy_record']) > 0:
-                    if now_price < para[stock_name]['buy_record'][-1]:
-                        para[stock_name]['buy_record'].pop()
-                    else:
-                        continue
-                para[stock_name]['sell'] += 1
+                if not can_I_go(para[stock_name]['record'],now_price, 0):
+                    continue
                 try:
                     user.sell(symbol, now_price, para[stock_name]['amount'])
+                    yue += now_price * para[stock_name]['amount']
+                    para[stock_name]['sell'] += 1
+                    para[stock_name]['operate_price'] = now_price
+                    para[stock_name]['record'].append({'Type': 0, 'price': now_price, 'amount': amount})
                 except Exception as e:
                     print(e)
-                para[stock_name]['operate_price'] = now_price
-                if (para[stock_name]['sell'] - min_count) == 0:
-                    para[stock_name]['sell_rate'] = rate
-                    continue
-                para[stock_name]['sell_rate'] = rate * (para[stock_name]['sell'] - min_count)
-                para[stock_name]['sell_record'].append(now_price)
-            if now_price * (1 + para[stock_name]['buy_rate']) < para[stock_name]['operate_price']:
+            elif now_price * (1 + para[stock_name]['buy_rate']) < para[stock_name]['operate_price']:
                 if para[stock_name]['sell'] - para[stock_name]['buy'] > para[stock_name]['lock'] \
-                        and now_price * (1 + randint(para[stock_name]['lock'] // 2, para[stock_name]['lock']) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
+                        and now_price * (1 + randint(para[stock_name]['lock'], para[stock_name]['lock'] * 2) * para[stock_name]['buy_rate']) > para[stock_name]['operate_price']:
                     continue
-                if len(para[stock_name]['sell_record']) > 0:
-                    if now_price < para[stock_name]['sell_record'][-1]:
-                        para[stock_name]['sell_record'].pop()
-                    else:
-                        continue
-                para[stock_name]['buy'] += 1
+                if not can_I_go(para[stock_name]['record'],now_price, 1):
+                    continue
+
                 try:
+                    if yue < now_price * para[stock_name]['amount']:
+                        print("没钱了", end='~~~')
+                        continue
                     user.buy(symbol, now_price, para[stock_name]['amount'])
+                    para[stock_name]['buy'] += 1
+                    yue -= now_price * para[stock_name]['amount']
+                    para[stock_name]['operate_price'] = now_price
+                    para[stock_name]['sell_record'].append({'Type': 1, 'price': now_price, 'amount': amount})
                 except Exception as e:
                     print(e)
-                para[stock_name]['operate_price'] = now_price
-                if (para[stock_name]['buy'] - min_count) == 0:
-                    para[stock_name]['buy_rate'] = rate
-                    continue
-                para[stock_name]['buy_rate'] = rate * (para[stock_name]['buy'] - min_count)
-                para[stock_name]['buy_record'].append(now_price)
         sleep(120)
-    with open('cache/para.txt', 'w', encoding='utf8') as f:
+    with open('cache/lock_para.txt', 'w', encoding='utf8') as f:
         f.write(str(para))
 
 
@@ -306,8 +347,8 @@ if __name__ == '__main__':
         Max_rate = 0
         Max_amount = 0
         Max_record = []
-        for rate in range(2,8):
-            for amount in range(0,5):
+        for rate in range(7,9):
+            for amount in range(5,8):
                 stock , record= test((rate+2) * 0.001, (amount + 1) * 100, symbol, stock_name)
                 if stock['总资金增长率'] > profit:
                     profit = stock['总资金增长率']
@@ -318,5 +359,5 @@ if __name__ == '__main__':
         print("\n最优横跳率:%s, 最优每次横跳手数:%s"%(Max_rate, Max_amount), '\n', stock_name[0], Max_stock, "\n\n")
         for item in Max_record:
             print(item)
-
-    run(get_Account())
+    # from HaiTong import get_Account
+    # run(get_Account())
