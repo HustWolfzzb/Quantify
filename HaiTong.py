@@ -59,6 +59,8 @@ class User():
                     amount = ss['可用余额']
         self.user.buy(code, price, amount)
 
+    def get_balance(self):
+        return self.ke_yong_jin_e
 
     def user_refresh(self):
         self.user.refresh()

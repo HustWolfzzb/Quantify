@@ -187,7 +187,7 @@ def cal_rate_times(record, type):
     record_type = [ x['Type'] for x in record[-1::-1] ]
     times = 1
     if len(record_type) != 0:
-        while record_type[times - 1] == type:
+        while times <= len(record_type) and record_type[times - 1] == type :
             times += 1
     return times
 
@@ -228,6 +228,10 @@ def can_I_go(record, price, type):
         return False
 
 
+def update_Lock_para(para):
+    with open('cache/lock_para.txt', 'w', encoding='utf8') as f:
+        f.write(str(para))
+
 def run(user, rate = 0.01, amount = 100):
     with open('cache/lock_para.txt','r', encoding='utf8') as f:
         para = eval(f.read())
@@ -239,7 +243,7 @@ def run(user, rate = 0.01, amount = 100):
     for s in range(len(stocks)):
         symbols.append(stocks[s]['证券代码'])
         stock_names.append(stocks[s]['证券名称'])
-    yue = user.balance['可用金额']
+    yue = user.get_balance()
     # times = 1
     while (True):
         # times += 1
@@ -257,7 +261,12 @@ def run(user, rate = 0.01, amount = 100):
         for symbol_idx in range(len(symbols)):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
-            now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
+            try:
+                now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
+            except Exception as e:
+                print(e)
+                sleep(10)
+                continue
 
             sell_times = cal_rate_times(para[stock_name]['record'], 0)
             buy_times = cal_rate_times(para[stock_name]['record'], 1)
@@ -271,11 +280,12 @@ def run(user, rate = 0.01, amount = 100):
                 if not can_I_go(para[stock_name]['record'], now_price, 0):
                     continue
                 try:
-                    user.sell(symbol, now_price, para[stock_name]['amount'] * (sell_times + 1) // 2)
+                    user.sell(symbol, now_price, para[stock_name]['amount'] * ((sell_times + 1) // 2) )
                     yue += now_price * para[stock_name]['amount']
                     para[stock_name]['sell'] += 1
                     para[stock_name]['operate_price'] = now_price
                     para[stock_name]['record'].append({'Type': 0, 'price': now_price, 'amount': amount})
+                    update_Lock_para(para)
                 except Exception as e:
                     print(e)
             elif now_price * (1 + para[stock_name]['buy_rate']) < para[stock_name]['operate_price']:
@@ -287,18 +297,18 @@ def run(user, rate = 0.01, amount = 100):
 
                 try:
                     if yue < now_price * para[stock_name]['amount']:
-                        print("没钱了", end='~~~')
+                        print("没钱了")
                         continue
-                    user.buy(symbol, now_price, para[stock_name]['amount'] * (buy_times + 1) // 2)
+                    user.buy(symbol, now_price, para[stock_name]['amount'] * ((buy_times + 1) // 2))
                     para[stock_name]['buy'] += 1
                     yue -= now_price * para[stock_name]['amount']
                     para[stock_name]['operate_price'] = now_price
-                    para[stock_name]['sell_record'].append({'Type': 1, 'price': now_price, 'amount': amount})
+                    para[stock_name]['record'].append({'Type': 1, 'price': now_price, 'amount': amount})
+                    update_Lock_para(para)
                 except Exception as e:
                     print(e)
         sleep(120)
-    with open('cache/lock_para.txt', 'w', encoding='utf8') as f:
-        f.write(str(para))
+
 
 
 if __name__ == '__main__':
@@ -362,7 +372,7 @@ if __name__ == '__main__':
                     Max_amount = (amount + 1) * 100
                     Max_record = record
         print("\n最优横跳率:%s, 最优每次横跳手数:%s"%(Max_rate, Max_amount), '\n', stock_name[0], Max_stock, "\n\n")
-        for item in Max_record:
-            print(item)
-    # from HaiTong import get_Account
-    # run(get_Account())
+        # for item in Max_record:
+        #     print(item)
+    from HaiTong import get_Account
+    run(get_Account())
