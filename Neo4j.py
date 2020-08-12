@@ -104,7 +104,7 @@ def update_neo4j_stock_profit_info(graph):
             continue
         if len(index) != 6 and len(index) > 0:
             index = '0'*(6-len(index)) + index
-        if count % int(length/1000) == 0:
+        if count % int(length/100) == 0:
             print("%s / %s"%(count, length))
         if index not in code_in_Neo4j:
             try:

@@ -161,6 +161,16 @@ def update_all_hushen_data(graph):
             print("%s 这只股票有问题"%code)
             continue
 
+def get_all_columns_with_label(label):
+    existTables =[x[0] for x in list(executeSQL(connect, conn, 'show tables;', True))]
+    stock_hist_label = {}
+    for table in existTables:
+        if table.find('300') == 0:
+            continue
+        getColumnSQL = "select " + label + " from `" + table + "` order by TIME;"
+        stock_hist_label[table] = [x[0] for x in list(executeSQL(connect, conn, getColumnSQL, True))]
+    return stock_hist_label
+
 def get_all_hist_data_by_pro():
     all_data = get_pro_stock_basic()
     ts_code = list(all_data.ts_code)

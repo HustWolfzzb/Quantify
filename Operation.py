@@ -102,13 +102,13 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
     for symbol_idx in range(len(symbols)):
         symbol = symbols[symbol_idx]
         stock_name = stock_names[symbol_idx]
-        date_price = get_realtime_price(symbol, '15')
+        date_price = get_realtime_price(symbol, '5')
 
         try:
             start_price = date_price[0][1][0]
             # start_price = 68.7
-            init_money = start_price * 2000
             start_own = 2000
+            init_money = start_price * start_own
             stock = {
                 '初始资金': init_money + start_price * start_own,
                 '当前资金': init_money + start_price * start_own,
@@ -130,13 +130,14 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
         sell_rate = rate
         sell = 0
         buy = 0
-        lock = 1
+        lock = 5
         # operate_price = 68.7
         operate_price = date_price[0][1][0]
         sell_record = []
         buy_record = []
         for day in date_price:
             price = day[1]
+            operate_price = price[0]
             for now_price in price[1:]:
                 min_count = min(sell, buy)
                 if now_price > operate_price * (sell_rate + 1):
@@ -181,6 +182,82 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
                 pass
         # print(stock_name, ":", stock, '\n')
     return stock, record
+
+
+def new_test(rate = 0.003, amount = 100, symbols=[] , stock_names=[] ):
+    record = []
+    for symbol_idx in range(len(symbols)):
+        symbol = symbols[symbol_idx]
+        stock_name = stock_names[symbol_idx]
+        date_price = get_realtime_price(symbol, '5')
+
+        try:
+            start_price = date_price[0][1][0]
+            # start_price = 68.7
+            init_money = start_price * 900
+            start_own = 900
+            stock = {
+                '初始资金': init_money + start_price * start_own,
+                '当前资金': init_money + start_price * start_own,
+                '可用余额': init_money,
+                '持有股份': start_own,
+                '可用股份': start_own,
+                '冻结股份': 0,
+                '初始价格': start_price,
+                '当前成本': start_price,
+                '最新价格': start_price,
+                '买卖总手数': 0,
+                '总资金增长率': 0,
+                '股价波动率': 0
+            }
+
+        except KeyError as e:
+            print(e)
+        buy_rate = rate
+        sell_rate = rate
+        sell = 0
+        buy = 0
+        lock = 5
+        # operate_price = 68.7
+        # operate_price = date_price[0][1][0]
+        record = []
+        re_log = []
+        sell_times = cal_rate_times(record, 0)
+        buy_times = cal_rate_times(record, 1)
+        operate_price = 0
+        for day in date_price:
+            price = day[1]
+            if operate_price == 0:
+                operate_price = price[0]
+            for now_price in price[1:]:
+                if now_price > operate_price * 1.003:
+                    if sell - buy > lock:
+                    # if sell - buy > lock and now_price < operate_price * (randint(lock, 2 * lock) * sell_rate + 1):
+                        continue
+                    if not can_I_go(record, now_price, 0):
+                        continue
+                    sell += 1
+                    operate(stock, now_price, amount * ((sell_times + 1) // 2), 's', re_log)
+                    operate_price = now_price
+                    record.append({'Type':0, 'price':now_price, 'amount': amount * ((sell_times + 1) // 2) })
+                if now_price * 1.003 < operate_price:
+                    if buy - sell > lock :
+                    # if buy - sell > lock and now_price * (1 + randint(lock, 2 * lock) * buy_rate) > operate_price:
+                        continue
+                    if not can_I_go(record, now_price, 1):
+                        continue
+                    buy += 1
+                    operate(stock, now_price, amount, 'b', re_log)
+                    operate_price = now_price
+                    record.append({'Type':1, 'price':now_price, 'amount': amount * ((buy_times + 1) // 2) })
+            stock['最新价格'] = price[-1]
+            kaishi = len(re_log)
+            skip_oneday(stock, price[-1], re_log)
+            if len(re_log) - kaishi == 1:
+                # print(price)
+                pass
+        # print(stock_name, ":", stock, '\n')
+    return stock, re_log
 
 
 def cal_rate_times(record, type):
@@ -284,7 +361,7 @@ def run(user, rate = 0.01, amount = 100):
                     yue += now_price * para[stock_name]['amount']
                     para[stock_name]['sell'] += 1
                     para[stock_name]['operate_price'] = now_price
-                    para[stock_name]['record'].append({'Type': 0, 'price': now_price, 'amount': amount})
+                    para[stock_name]['record'].append({'Type': 0, 'price': now_price, 'amount': para[stock_name]['amount'] * ((sell_times + 1) // 2)})
                     update_Lock_para(para)
                 except Exception as e:
                     print(e)
@@ -303,7 +380,7 @@ def run(user, rate = 0.01, amount = 100):
                     para[stock_name]['buy'] += 1
                     yue -= now_price * para[stock_name]['amount']
                     para[stock_name]['operate_price'] = now_price
-                    para[stock_name]['record'].append({'Type': 1, 'price': now_price, 'amount': amount})
+                    para[stock_name]['record'].append({'Type': 1, 'price': now_price, 'amount': para[stock_name]['amount'] * ((buy_times + 1) // 2)})
                     update_Lock_para(para)
                 except Exception as e:
                     print(e)
@@ -331,6 +408,9 @@ if __name__ == '__main__':
                 "000157",
                 "002079",
                 "601988",
+                "601933",
+                "000736",
+                "600272",
                ]
     stock_names = [
                     '京东方A',
@@ -351,20 +431,23 @@ if __name__ == '__main__':
                     "中联重科",
                     "苏州固锝",
                     "中国银行",
+                    "永辉超市",
+                    "罗牛山",
+                    "开开实业",
                    ]
     for idx in range(len(symbols)):
         symbol = [symbols[idx]]
         stock_name = [stock_names[idx]]
-        if stock_name[0] != '中百集团':
+        if not (stock_name[0] == '上海医药'):
             continue
         Max_stock = None
         profit = -1
         Max_rate = 0
         Max_amount = 0
         Max_record = []
-        for rate in range(7,9):
-            for amount in range(5,8):
-                stock , record= test((rate+2) * 0.001, (amount + 1) * 100, symbol, stock_name)
+        for rate in range(1,2):
+            for amount in range(0,3):
+                stock , record= new_test((rate+2) * 0.001, (amount + 1) * 100, symbol, stock_name)
                 if stock['总资金增长率'] > profit:
                     profit = stock['总资金增长率']
                     Max_stock = stock
@@ -372,7 +455,7 @@ if __name__ == '__main__':
                     Max_amount = (amount + 1) * 100
                     Max_record = record
         print("\n最优横跳率:%s, 最优每次横跳手数:%s"%(Max_rate, Max_amount), '\n', stock_name[0], Max_stock, "\n\n")
-        # for item in Max_record:
-        #     print(item)
-    from HaiTong import get_Account
-    run(get_Account())
+        for item in Max_record:
+            print(item)
+    # from HaiTong import get_Account
+    # run(get_Account())

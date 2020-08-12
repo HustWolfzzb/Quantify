@@ -9,9 +9,67 @@ from Entity import User,Stock
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from Data import get_stock_basics, get_hist_data
 from Neo4j import get_Graph
+from Mysql import get_all_columns_with_label
+
+
+def hist_predict(stock='600196'):
+    # all_hist = get_all_columns_with_label('p_change')
+    # for x in all_hist.keys():
+    #     for idx in range(len(all_hist[x])):
+    #         all_hist[x][idx] = round(all_hist[x][idx], 0)
+    # with open("cache/all_hist_p_price.txt", 'w', encoding='utf8') as o:
+    #     o.write(str(all_hist))
+    with open("cache/all_hist_p_price.txt", 'r', encoding='utf8') as i:
+        all_hist = eval(i.read())
+    target = all_hist[stock]
+    alen = len(all_hist)
+    count = 0
+    for length in range(3, 6):
+        nihe = []
+        print("\n\n 复星医药最近%s天的走势"%length)
+        print(target[-length:])
+        for x in all_hist.keys():
+            count += 1
+            # if count % (alen//20) == 0:
+            #     print("[","="*(count // (alen//20)),'>',' '*(20 - (count // (alen//20))), ']')
+            data = all_hist[x]
+            d_len = len(data)
+            if d_len < 10:
+                continue
+            if x != stock:
+                fu = target[-length:]
+                for window in range(d_len - length):
+                    comp = data[window:window + length]
+                    if len(comp) != length:
+                        continue
+                    flag = True
+                    for index in range(length):
+                        try:
+                            if -1 <= comp[index] - fu[index] and comp[index] - fu[index] <= 1:
+                                continue
+                            else:
+                                flag = False
+                        except Exception as e:
+                            flag = False
+                            continue
+                    if flag:
+                        print("拟合到股票数据接近，STOCK: %s" % x, "Index: %s, PRICE_CHANGE:"%(d_len - window))
+                        try:
+                            if d_len > 2 * length + window:
+                                print(data[window:window + length * 2])
+                                nihe.append(data[window + length])
+                            else:
+                                print(data[window, d_len])
+                                nihe.append(data[window + length])
+                        except Exception as e:
+                            continue
+        print("%s天内，拟合的平均趋势为%s"%(length, sum(nihe)/len(nihe)))
+
+
+
 
 class simulation_User():
     balance = {
@@ -221,4 +279,5 @@ def main():
 
 if __name__ == '__main__':
     # main()
-    filter()
+    # filter()
+    hist_predict()
