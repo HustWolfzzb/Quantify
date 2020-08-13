@@ -92,7 +92,7 @@ def skip_oneday(stock_position, close_price, record, day):
     # stock_position['买卖总手数'] = 0
     stock_position['总资金增长率'] = round((stock_position['当前资金'] - stock_position['初始资金'])/stock_position['初始资金'],4)
     stock_position['股价波动率'] = round((stock_position['最新价格'] - stock_position['初始价格'])/stock_position['初始价格'],4)
-    record.append("↑"*10 + str(day) + "↑"*10)
+    record.append("↑"*10 + str(day) + "↑"*10 + '\n')
 
 
 
@@ -343,6 +343,84 @@ def new_test(rate = 0.003, amount = 100, symbols=[] , stock_names=[] ):
         # print(stock_name, ":", stock, '\n')
     return stock, re_log
 
+def open_base(stock = '000759', amount = 100, k_type='15'):
+    record = []
+    symbol = '000759'
+    stock_name = '中百集团'
+    date_price = get_realtime_price(symbol, k_type)
+
+    try:
+        start_price = date_price[0][1][0]
+        # start_price = 68.7
+        start_own = 10000
+        init_money = start_price * start_own
+        stock = {
+            '初始资金': init_money + start_price * start_own,
+            '当前资金': init_money + start_price * start_own,
+            '可用余额': init_money,
+            '持有股份': start_own,
+            '可用股份': start_own,
+            '冻结股份': 0,
+            '初始价格': start_price,
+            '当前成本': start_price,
+            '最新价格': start_price,
+            '买卖总手数': 0,
+            '总资金增长率': 0,
+            '股价波动率': 0
+        }
+
+    except KeyError as e:
+        print(e)
+
+    lock = 3
+    # base = 68.7
+    base = 0
+    sell_record = []
+    buy_record = []
+    count = 0
+    for day in date_price:
+        sell = 0
+        buy = 0
+        buy_times = 2
+        sell_times = 2
+        count += 1
+        price = day[1]
+        if base == 0:
+            base = price[0]
+        base = price[0]
+        for now_price in price[1:]:
+            if now_price > base * ((sell_times - 1) * 0.0015 + 1):
+                # if sell - buy > lock :
+                if sell - buy > lock and now_price < base * (randint(lock, 2 * lock) * 0.004 + 1):
+                    continue
+                operate(stock, now_price, amount * (sell_times // 2), 's', record)
+                sell += 1
+                sell_times += 1
+                buy_times -= 1
+                if buy_times < 2:
+                    buy_times = 2
+                sell_record.append(now_price)
+
+            if now_price * ( (buy_times - 1) * 0.0015 + 1) < base:
+                # if buy - sell > lock :
+                if buy - sell > lock and now_price * (randint(lock, 2 * lock) * 0.004 + 1) > base:
+                    continue
+                operate(stock, now_price, amount * (buy_times // 2), 'b', record)
+                buy += 1
+                buy_times += 1
+                sell_times -= 1
+                if sell_times < 2:
+                    sell_times = 2
+                buy_record.append(now_price)
+        stock['最新价格'] = price[-1]
+        kaishi = len(record)
+        skip_oneday(stock, price[-1], record, day[0])
+        if len(record) - kaishi == 1:
+            # print(price)
+            pass
+        # print(stock_name, ":", stock, '\n')
+    return stock, record
+
 
 def cal_rate_times(record, type):
     record_type = [ x['Type'] for x in record[-1::-1] ]
@@ -351,7 +429,6 @@ def cal_rate_times(record, type):
         while times <= len(record_type) and record_type[times - 1] == type :
             times += 1
     return times
-
 
 def can_I_go(record, price, type):
     re_price = 0
@@ -549,6 +626,7 @@ def run_ZhongBai(user, rate = 0.005, amount = 100 , k_type='5'):
                 print(e)
 
         sleep(30)
+
 if __name__ == '__main__':
     symbols = [
                 "000725",
@@ -621,7 +699,12 @@ if __name__ == '__main__':
         '15':24,
         '60':88
     }
-    print("中百集团，原始手数9手，原始可用资金与股票市值相等\n\n")
+    print("中百集团，原始手数100手，原始可用资金与股票市值相等\n\n")
+    stock, record = open_base()
+    print(stock)
+    for item in record:
+        print(item)
+
     # for rate in range(5,6):
     #     for amount in range(1,2):
     #         for k in ['5', '15', '60']:
@@ -631,5 +714,5 @@ if __name__ == '__main__':
     #     print("*"*30, '\n')
     #     for item in Max_record:
     #         print(item)
-    from HaiTong import get_Account
-    run_ZhongBai(get_Account())
+    # from HaiTong import get_Account
+    # run_ZhongBai(get_Account())

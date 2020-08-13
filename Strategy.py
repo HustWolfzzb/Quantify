@@ -5,14 +5,16 @@
 怎么对接进去
 先不管了睡觉
 """
+from random import randint
+
 from Entity import User,Stock
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 from datetime import datetime, timedelta
-from Data import get_stock_basics, get_hist_data
+from Data import get_stock_basics, get_hist_data, get_realtime_price
 from Neo4j import get_Graph
-from Mysql import get_all_columns_with_label
+from Mysql import get_all_columns_with_label, get_all_stock_symbol
 
 
 def hist_predict(stock='600196'):
@@ -68,7 +70,70 @@ def hist_predict(stock='600196'):
                             continue
         print("%s天内，拟合的平均趋势为%s"%(length, sum(nihe)/len(nihe)))
 
+def cal_relation_with_open_close(stock='000759', show=True):
+    gap = -365
+    open = get_all_columns_with_label('open', [stock])[stock][gap:]
+    close = get_all_columns_with_label('close', [stock])[stock][gap:]
+    high = get_all_columns_with_label('high', [stock])[stock][gap:]
+    low = get_all_columns_with_label('low', [stock])[stock][gap:]
+    price_change = get_all_columns_with_label('price_change', [stock])[stock][gap:]
 
+    print("开盘为开盘时的涨跌，\n上行为当天相对开盘价上行最多\n下探为相对开盘价跌了最多")
+    count = 0
+    for idx in range(1, len(open)):
+
+        kaipan =  round(open[idx] - close[idx - 1], 2 )
+        zuigao = round(high[idx] - close[idx - 1], 2)
+        zuidi = round(low[idx] - close[idx - 1], 2)
+        h_k = round(zuigao - kaipan, 2)
+        l_k = round(zuidi - kaipan , 2)
+        if kaipan > -0.1:
+            continue
+        count += 1
+        print("%s / %s"%(count,abs(gap)), "开盘：%s, 上行:%s, ：下探%s"%( kaipan, h_k , l_k ))
+    return [0]
+    if len(open) != len(close):
+        print("长度不等")
+        return [0]
+    if len(high) != len(open):
+        print("high长度不等")
+        return
+    if len(close) != len(open):
+        print("low长度不等")
+        return
+    if len(price_change) != len(open):
+        print("low长度不等")
+        return
+    if len(open) == 0:
+        print("Fuck?")
+        print(open, close)
+        return [0]
+    zhang_high = 0
+    die_low = 0
+    kuayue_kai = 0
+    kuayue_zuo_close = 0
+    zhang_days = len([x for x in price_change if x > 0 ])
+    kai_zhang_days = len([x for x in range(1,len(open)) if open[x] > close[x - 1] ] )
+    kai_die_days = len([x for x in range(1,len(open)) if open[x] < close[x - 1] ] )
+    die_days = len([x for x in price_change if x < 0])
+    for idx in range(1, len(open)):
+        if high[idx] > open[idx] and low[idx] < open[idx]:
+            kuayue_kai += 1
+        if high[idx] > close[idx - 1] and low[idx] < close[idx - 1]:
+            kuayue_zuo_close += 1
+        if price_change[idx] > 0 and open[idx] > close[idx - 1]:
+            zhang_high += 1
+        if price_change[idx] < 0 and open[idx] < close[idx - 1]:
+            die_low += 1
+    if show:
+        print("开盘的涨且当天涨的比例：%s"%((zhang_high)/kai_zhang_days))
+        print("开盘的跌且当天跌的比例：%s"%((die_low)/kai_die_days))
+        print("跨越开盘价的天数的比例：%s"%((kuayue_kai)/len(open)))
+        print("跨越前一天收盘价的天数的比例：%s"%((kuayue_zuo_close)/len(open)))
+    try:
+        return [(zhang_high)/kai_zhang_days, (die_low)/kai_die_days, (kuayue_kai)/len(open), (kuayue_zuo_close)/len(open)]
+    except Exception as e:
+        return [(zhang_high)/(kai_zhang_days+1)]
 
 
 class simulation_User():
@@ -280,4 +345,19 @@ def main():
 if __name__ == '__main__':
     # main()
     # filter()
-    hist_predict()
+    # hist_predict()
+    tables = ['000759']
+    max_table = ''
+    max_correlation = 0
+    all_len = len([x for x in tables if x.find('300') != 0])
+    count = 0
+    for table in tables:
+        if count % 100 == 0:
+            print("%s, Progress:%s / %s"%(table, count , all_len))
+        if table.find('300') != 0:
+            count += 1
+            data = cal_relation_with_open_close(table, show=True)
+            if data[0] > max_correlation:
+                max_correlation = data[0]
+                max_table = table
+    print(max_table, max_correlation)

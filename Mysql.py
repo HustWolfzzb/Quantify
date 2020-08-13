@@ -118,7 +118,9 @@ def updateData(code):
     except Exception as e:
         print(e)
 
-
+def get_all_stock_symbol():
+    existTables = [x[0] for x in list(executeSQL(connect, conn, 'show tables;', True))]
+    return existTables
 
 def get_all_hushen_data(filename = 'stockName.xlsx'):
     df = get_pro_stock_basic()
@@ -161,8 +163,9 @@ def update_all_hushen_data(graph):
             print("%s 这只股票有问题"%code)
             continue
 
-def get_all_columns_with_label(label):
-    existTables =[x[0] for x in list(executeSQL(connect, conn, 'show tables;', True))]
+def get_all_columns_with_label(label, existTables = []):
+    if len(existTables) == 0:
+        existTables =[x[0] for x in list(executeSQL(connect, conn, 'show tables;', True))]
     stock_hist_label = {}
     for table in existTables:
         if table.find('300') == 0:
