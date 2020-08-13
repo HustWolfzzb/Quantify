@@ -192,7 +192,7 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
     try:
         start_price = date_price[0][1][0]
         # start_price = 68.7
-        start_own = 2000
+        start_own = 900
         init_money = start_price * start_own
         stock = {
             '初始资金': init_money + start_price * start_own,
@@ -212,8 +212,8 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
     except KeyError as e:
         print(e)
 
-    buy_times = 2
-    sell_times = 2
+    buy_times = 1
+    sell_times = 1
     buy_rate = rate * buy_times
     sell_rate = rate * sell_times
     sell = 0
@@ -235,12 +235,12 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
                 # if sell - buy > lock :
                 if sell - buy > lock and now_price < operate_price * (randint(lock, 2 * lock) * sell_rate + 1):
                     continue
-                operate(stock, now_price, amount * (sell_times - 1), 's', record)
+                operate(stock, now_price, amount * (sell_times), 's', record)
                 sell += 1
                 sell_times += 1
                 buy_times -= 1
-                if buy_times < 2:
-                    buy_times = 2
+                if buy_times < 1:
+                    buy_times = 1
                 operate_price = now_price
                 sell_rate = sell_times * rate
                 sell_record.append(now_price)
@@ -249,12 +249,12 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
                 # if buy - sell > lock :
                 if buy - sell > lock and now_price * (1 + randint(lock, 2 * lock) * buy_rate) > operate_price:
                     continue
-                operate(stock, now_price, amount * (buy_times - 1), 'b', record)
+                operate(stock, now_price, amount * (buy_times), 'b', record)
                 buy += 1
                 buy_times += 1
                 sell_times -= 1
-                if sell_times < 2:
-                    sell_times = 2
+                if sell_times < 1:
+                    sell_times = 1
                 operate_price = now_price
                 buy_rate = rate * buy_times
                 buy_record.append(now_price)
@@ -470,7 +470,7 @@ def run(user, rate = 0.01, amount = 100):
                     print(e)
         sleep(120)
 
-def run_ZhongBai(user, rate = 0.002, amount = 100 , k_type='5'):
+def run_ZhongBai(user, rate = 0.005, amount = 100 , k_type='5'):
     stocks = user.stock.get_position()
     symbols = []
     stock_names = []
@@ -480,8 +480,8 @@ def run_ZhongBai(user, rate = 0.002, amount = 100 , k_type='5'):
         symbols.append(stocks[s]['证券代码'])
         stock_names.append(stocks[s]['证券名称'])
     yue = user.get_balance()
-    buy_times = 2
-    sell_times = 2
+    buy_times = 1
+    sell_times = 1
     sell = 0
     buy = 0
     lock = 4
@@ -517,13 +517,13 @@ def run_ZhongBai(user, rate = 0.002, amount = 100 , k_type='5'):
             if sell - buy > lock and now_price < operate_price * (randint(lock, 2 * lock) * sell_rate + 1):
                 continue
             try:
-                user.sell(symbol, now_price, amount * (sell_times - 1))
-                yue += now_price * amount * (sell_times - 1)
+                user.sell(symbol, now_price, amount * (sell_times))
+                yue += now_price * amount * (sell_times)
                 sell += 1
                 sell_times += 1
                 buy_times -= 1
-                if buy_times < 2:
-                    buy_times = 2
+                if buy_times < 1:
+                    buy_times = 1
                 operate_price = now_price
                 sell_record.append(now_price)
             except Exception as e:
@@ -534,15 +534,15 @@ def run_ZhongBai(user, rate = 0.002, amount = 100 , k_type='5'):
             if buy - sell > lock and now_price * (1 + randint(lock, 2 * lock) * buy_rate) > operate_price:
                 continue
             try:
-                if yue < now_price * amount * (buy_times - 1):
+                if yue < now_price * amount * (buy_times ):
                     print("没钱了")
                     continue
-                user.buy(symbol, now_price,  amount * (buy_times - 1))
+                user.buy(symbol, now_price,  amount * (buy_times ))
                 buy += 1
                 buy_times += 1
                 sell_times -= 1
-                if sell_times < 2:
-                    sell_times = 2
+                if sell_times < 1:
+                    sell_times = 1
                 operate_price = now_price
                 buy_record.append(now_price)
             except Exception as e:
@@ -621,15 +621,15 @@ if __name__ == '__main__':
         '15':24,
         '60':88
     }
-    print("中百集团，原始手数20手，原始可用资金与股票市值相等\n\n")
-    for rate in range(2,7):
-        for amount in range(3,7):
-            for k in ['5', '15', '60']:
-                stock, Max_record = ZhongBai(rate * 0.001 , amount * 100, k )
-                print( '最小变化率（等差变化）:%s, 最小买卖数量（等差变化）:%s, 跨越时长:%s\n'%(rate * 0.002 , amount * 100, freq_days[k]), stock_name[-3], stock, "\n")
-            print("="*20,'\n')
-        print("*"*30, '\n')
-        # for item in Max_record:
-        #     print(item)
+    print("中百集团，原始手数9手，原始可用资金与股票市值相等\n\n")
+    # for rate in range(5,6):
+    #     for amount in range(1,2):
+    #         for k in ['5', '15', '60']:
+    #             stock, Max_record = ZhongBai(rate * 0.001 , amount * 100, k )
+    #             print( '最小变化率（等差变化）:%s, 最小买卖数量（等差变化）:%s, 跨越时长:%s\n'%(rate * 0.001 , amount * 100, freq_days[k]), stock_name[-3], stock, "\n")
+    #         print("="*20,'\n')
+    #     print("*"*30, '\n')
+    #     for item in Max_record:
+    #         print(item)
     from HaiTong import get_Account
     run_ZhongBai(get_Account())
