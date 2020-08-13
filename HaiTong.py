@@ -41,23 +41,10 @@ class User():
         self.stock = Stock(user.position)
 
     def buy(self, code, price, amount):
-        data = ts.get_realtime_quotes(code)
-        price_now = data.at[0, 'price']
-        price = price_now
-        print(self.user.buy(code, price, amount))
+        self.user.buy(code, price, amount)
 
     def sell(self, code, price, amount):
-        data = ts.get_realtime_quotes(code)
-        price_now = data.at[0, 'price']
-        if price < price_now and price / price_now > 0.995:
-            price = price_now
-        elif price > price_now:
-            price = price_now
-        for ss in self.stock.get_position():
-            if ss['证券代码'] == code:
-                if ss['可用余额'] < amount:
-                    amount = ss['可用余额']
-        self.user.buy(code, price, amount)
+        self.user.sell(code, price, amount)
 
     def get_balance(self):
         return self.ke_yong_jin_e
