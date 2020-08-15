@@ -80,17 +80,45 @@ def cal_relation_with_open_close(stock='000759', show=True):
 
     print("开盘为开盘时的涨跌，\n上行为当天相对开盘价上行最多\n下探为相对开盘价跌了最多")
     count = 0
-    for idx in range(1, len(open)):
-
-        kaipan =  round(open[idx] - close[idx - 1], 2 )
+    sum_h = 0
+    sum_l = 0
+    for idx in range(1, len(open) - 1):
+        kaipan =  round(open[idx] - close[idx - 1], 2)
         zuigao = round(high[idx] - close[idx - 1], 2)
         zuidi = round(low[idx] - close[idx - 1], 2)
         h_k = round(zuigao - kaipan, 2)
         l_k = round(zuidi - kaipan , 2)
-        if kaipan > -0.1:
-            continue
-        count += 1
-        print("%s / %s"%(count,abs(gap)), "开盘：%s, 上行:%s, ：下探%s"%( kaipan, h_k , l_k ))
+        # if kaipan / open[idx] > 0.02 or kaipan / open[idx] < -0.2:
+        #     continue
+
+        if kaipan == 0 and open[idx + 1] > close[idx]:
+            sum_h += h_k
+            sum_l += l_k
+            count += 1
+            # print("%s / %s"%(count, abs(gap)), "开盘：%s, 上行:%s, ：下探%s"%( kaipan, zuigao , zuidi))
+    print("一共有%s天, 上行均值：%s, 下探均值：%s"%(count, sum_h/count, sum_l/count))
+
+
+    continue_up = [0] * 10
+    continue_down = [0] * 10
+    p = 0
+    while (p < len(open)):
+        lian_count = 1
+        for window in range(1, 20):
+            if p + window < len(open):
+                if price_change[p + window] * price_change[p] > 0:
+                    lian_count += 1
+                else:
+                    break
+        if price_change[p] > 0:
+            continue_up[lian_count] += 1
+        elif price_change[p] < 0:
+            continue_down[lian_count] += 1
+        p += 1
+    print(continue_up[1:])
+    print(continue_down[1:])
+
+
     return [0]
     if len(open) != len(close):
         print("长度不等")
@@ -360,4 +388,4 @@ if __name__ == '__main__':
             if data[0] > max_correlation:
                 max_correlation = data[0]
                 max_table = table
-    print(max_table, max_correlation)
+    # print(max_table, max_correlation)

@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta, date
 from time import sleep
 import numpy as np
 
-from Strategy import nihe
+# from Strategy import nihe
 from Data import get_realtime_price, get_pro
 
 
@@ -266,8 +266,7 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
 
 def base_line(rate = 0.002, amount = 100 , k_type='5'):
     record = []
-    symbol = '000735' \
-             ''
+    symbol = '000759'
     stock_name = '中百集团'
     date_price = get_realtime_price(symbol, k_type)
 
@@ -300,7 +299,7 @@ def base_line(rate = 0.002, amount = 100 , k_type='5'):
     sell_rate = rate * sell_times
     sell = 0
     buy = 0
-    lock = 5
+    lock = 1
     # operate_price = 68.7
     operate_price = 0
     sell_record = []
@@ -316,16 +315,16 @@ def base_line(rate = 0.002, amount = 100 , k_type='5'):
             operate_price = price[0]
         operate_price = price[0]
         for now_price in price[1:]:
-            if now_price > operate_price * (sell_rate + 1):
+            if now_price > operate_price * (sell_rate + 1) or now_price > buy_price + 0.05:
                 # if sell - buy > lock :
                 if buy >= 0:
                     if now_price < buy_price:
                         continue
-                    operate(stock, now_price, 400, 's', record)
+                    operate(stock, now_price,  amount * sell_times, 's', record)
                     sell_price = now_price
                     buy -= 1
 
-            if now_price * (1 + buy_rate) < operate_price:
+            if now_price * (1 + buy_rate) < operate_price or now_price < sell_price - 0.05:
                 if buy <= 0:
                     if now_price > sell_price:
                         continue
@@ -792,7 +791,7 @@ if __name__ == '__main__':
     print("中百集团，原始手数9手，原始可用资金与股票市值相等\n\n")
     for rate in range(2,3):
         for amount in range(5,6):
-            for k in ['60']:
+            for k in ['15']:
                 stock, Max_record = base_line(rate * 0.002 , amount * 100, k )
                 print( '最小变化率（等差变化）:%s, 最小买卖数量（等差变化）:%s, 跨越时长:%s\n'%(rate * 0.001 , amount * 100, freq_days[k]), stock_name[-3], stock, "\n")
             print("="*20,'\n')
