@@ -5,9 +5,10 @@ import tushare as ts
 from datetime import datetime, time, timedelta, date
 from time import sleep
 import numpy as np
-
-from Strategy import nihe
+import easyquotation
+# from Strategy import nihe
 from Data import get_realtime_price, get_pro
+
 
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30
@@ -20,7 +21,7 @@ AFTERNOON_END = time(15, 00)
 symbol = ["002164","002517","002457","600723","600918","600720","603187","002271","000759","000735","601933"]
 stock_name =["宁波东力","恺英网络","青龙管业","首商股份","中泰证券","祁连山","海容冷链","东方雨虹","中百集团","罗牛山","永辉超市"]
 stock_code = { symbol[x]:stock_name[x] for x in range(len(symbol))}
-
+qo = easyquotation.use('sina')
 
 def is_openMartket(pro):
     today_date = str(date.today().isoformat()).replace('-', '')
@@ -266,7 +267,7 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
 
 def base_line(rate = 0.002, amount = 100 , k_type='5'):
     record = []
-    symbol = '000735' \
+    symbol = '000759' \
              ''
     stock_name = '中百集团'
     date_price = get_realtime_price(symbol, k_type)
@@ -274,7 +275,7 @@ def base_line(rate = 0.002, amount = 100 , k_type='5'):
     try:
         start_price = date_price[0][1][0]
         # start_price = 68.7
-        start_own = 900
+        start_own = 1600
         init_money = start_price * start_own
         stock = {
             '初始资金': init_money + start_price * start_own,
@@ -341,6 +342,87 @@ def base_line(rate = 0.002, amount = 100 , k_type='5'):
             pass
         # print(stock_name, ":", stock, '\n')
     return stock, record
+
+
+def JiZhunCeLue(rate = 0.002, amount = 100 , k_type='15'):
+    record = []
+    symbol = '000759'
+    stock_name = '中百集团'
+    date_price = get_realtime_price(symbol, k_type)
+
+    try:
+        start_price = date_price[0][1][0]
+        # start_price = 68.7
+        start_own = 1600
+        init_money = start_price * start_own * 2
+        stock = {
+            '初始资金': init_money + start_price * start_own,
+            '当前资金': init_money + start_price * start_own,
+            '可用余额': init_money,
+            '持有股份': start_own,
+            '可用股份': start_own,
+            '冻结股份': 0,
+            '初始价格': start_price,
+            '当前成本': start_price,
+            '最新价格': start_price,
+            '买卖总手数': 0,
+            '总资金增长率': 0,
+            '股价波动率': 0
+        }
+
+    except KeyError as e:
+        print(e)
+
+    smallest_rate = 0.01
+    buy_amount = [100]
+    for i in range(10):
+        buy_amount.append(buy_amount[-1] + 100)
+    sell_rate = [0.5] * 10
+
+    operate_price = 0
+    cost_price = start_price
+    for day in date_price:
+        buy_record = [0] * 10
+        sell_record = [0] * 10
+        price = day[1]
+        if operate_price == 0:
+            operate_price = price[0]
+        operate_price = price[0]
+        operate_price = max(cost_price, operate_price)
+        for now_price in price[1:]:
+            if now_price > operate_price:
+                times = int( (now_price - operate_price ) / operate_price // smallest_rate)
+                if times >= 10:
+                    times = 9
+                sell_amount = int((sell_rate[times - 1] * stock['可用股份'])// 100 * 100)
+                if sell_record[times] != 0 or times == 0 or sell_amount == 0:
+                    continue
+                else:
+                    if stock['持有股份'] <= sell_amount - 100:
+                        sell_amount = stock['持有股份'] - 100
+                    if sell_amount == 0:
+                        continue
+                    operate(stock, now_price, sell_amount, 's', record)
+                    sell_record[times] = 1
+            if now_price < operate_price:
+                times = int((operate_price - now_price) / operate_price // smallest_rate)
+                if times >= 10:
+                    times = 9
+                b_amount = buy_amount[times]
+                if buy_record[times] != 0 or b_amount < 100 or times == 0:
+                    continue
+                operate(stock, now_price, b_amount, 'b', record)
+                buy_record[times] = 1
+        cost_price = stock['当前成本']
+        stock['最新价格'] = price[-1]
+        kaishi = len(record)
+        skip_oneday(stock, price[-1], record, day[0])
+        if len(record) - kaishi == 1:
+            # print(price)
+            pass
+        # print(stock_name, ":", stock, '\n')
+    return stock, record
+
 
 def new_test(rate = 0.003, amount = 100, symbols=[] , stock_names=[] ):
     record = []
@@ -497,7 +579,7 @@ def run(user, rate = 0.01, amount = 100):
             symbol = symbols[symbol_idx]
             stock_name = stock_names[symbol_idx]
             try:
-                now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
+                now_price = qo.real(symbol)[symbol]['now']
             except Exception as e:
                 print(e)
                 sleep(10)
@@ -542,7 +624,7 @@ def run(user, rate = 0.01, amount = 100):
                     print(e)
         sleep(120)
 
-def run_ZhongBai(user, rate = 0.004, amount = 200):
+def run_ZhongBai(user, rate = 0.003, amount = 200):
     print("正在监测中百集团")
     stocks = user.stock.get_position()
     symbols = []
@@ -584,7 +666,7 @@ def run_ZhongBai(user, rate = 0.004, amount = 200):
         buy_rate = rate * buy_times
         sell_rate = rate * sell_times
         try:
-            now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
+            now_price = qo.real(symbol)[symbol]['now']
         except Exception as e:
             print("Here", e)
             sleep(10)
@@ -668,7 +750,7 @@ def run_ShangYi(user, rate = 0.01, amount = 100 ):
         buy_rate = rate * buy_times
         sell_rate = rate * sell_times
         try:
-            now_price = float(list(ts.get_realtime_quotes(symbol).price)[0])
+            now_price = qo.real(symbol)[symbol]['now']
         except Exception as e:
             print("Here", e)
             sleep(10)
@@ -789,15 +871,24 @@ if __name__ == '__main__':
         '15':24,
         '60':88
     }
-    print("中百集团，原始手数9手，原始可用资金与股票市值相等\n\n")
-    for rate in range(2,3):
-        for amount in range(5,6):
-            for k in ['60']:
-                stock, Max_record = base_line(rate * 0.002 , amount * 100, k )
-                print( '最小变化率（等差变化）:%s, 最小买卖数量（等差变化）:%s, 跨越时长:%s\n'%(rate * 0.001 , amount * 100, freq_days[k]), stock_name[-3], stock, "\n")
-            print("="*20,'\n')
-        print("*"*30, '\n')
-    for item in Max_record:
+    # print("中百集团，原始手数9手，原始可用资金与股票市值相等\n\n")
+    stock, record = JiZhunCeLue()
+    print(stock)
+    for item in record:
         print(item)
+    # for rate in range(2,3):
+    #     for amount in range(5,6):
+    #         for k in ['60']:
+    #             stock, Max_record = base_line(rate * 0.002 , amount * 100, k )
+    #             print( '最小变化率（等差变化）:%s, 最小买卖数量（等差变化）:%s, 跨越时长:%s\n'%(rate * 0.001 , amount * 100, freq_days[k]), stock_name[-3], stock, "\n")
+    #         print("="*20,'\n')
+    #     print("*"*30, '\n')
+    # for item in Max_record:
+    #     print(item)
     # from HaiTong import get_Account
     # user = get_Account()
+    # try:
+    #     run_ZhongBai(user)
+    # except Exception as e:
+    #     print(e)
+    #     sleep(20)
