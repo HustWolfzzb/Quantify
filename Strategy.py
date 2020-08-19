@@ -83,7 +83,7 @@ def cal_relation_with_open_close(stock='000759', show=True):
     sum_h = 0
     sum_l = 0
     for idx in range(1, len(open) - 1):
-        kaipan =  round(open[idx] - close[idx - 1], 2)
+        kaipan = round(open[idx] - close[idx - 1], 2)
         zuigao = round(high[idx] - close[idx - 1], 2)
         zuidi = round(low[idx] - close[idx - 1], 2)
         h_k = round(zuigao - kaipan, 2)
@@ -195,6 +195,20 @@ def residuals(p, y, x, fun):
     实验数据x, y和拟合函数之间的差，p为拟合需要找到的系数
     """
     return y - fun(x, p)
+
+
+def find_nice_stock():
+    close = get_all_columns_with_label('p_change')
+    leng = len(close.keys())
+    count = 0
+    for key in close.keys():
+        count += 1
+        if count % (leng//10) == 0:
+            print("[" , '=' * (count//(leng//10)), ']')
+        if len(close[key]) > 4:
+            if close[key][-1] <= 0 and close[key][-2] <= 0 and close[key][-3] <= 0 and close[key][-4] < 0:
+                print(key, close[key][-3:])
+
 
 
 #直线方程
@@ -374,18 +388,19 @@ if __name__ == '__main__':
     # main()
     # filter()
     # hist_predict()
-    tables = ['000759']
-    max_table = ''
-    max_correlation = 0
-    all_len = len([x for x in tables if x.find('300') != 0])
-    count = 0
-    for table in tables:
-        if count % 100 == 0:
-            print("%s, Progress:%s / %s"%(table, count , all_len))
-        if table.find('300') != 0:
-            count += 1
-            data = cal_relation_with_open_close(table, show=True)
-            if data[0] > max_correlation:
-                max_correlation = data[0]
-                max_table = table
+    # tables = ['000759']
+    # max_table = ''
+    # max_correlation = 0
+    # all_len = len([x for x in tables if x.find('300') != 0])
+    # count = 0
+    # for table in tables:
+    #     if count % 100 == 0:
+    #         print("%s, Progress:%s / %s"%(table, count , all_len))
+    #     if table.find('300') != 0:
+    #         count += 1
+    #         data = cal_relation_with_open_close(table, show=True)
+    #         if data[0] > max_correlation:
+    #             max_correlation = data[0]
+    #             max_table = table
     # print(max_table, max_correlation)
+    find_nice_stock()

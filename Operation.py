@@ -34,22 +34,22 @@ def is_openMartket(pro):
         return 0
     return 1
 
-def predict(data):
-    para, func, func_min_offset = nihe(data)
-    if func_min_offset == -1:
-        return [0]
-    x2 = np.arange(0, len(data) + 20)
-    y2 = None
-    if func_min_offset == 0 or func_min_offset == 2:
-        A, B, C = para
-        y2 = func(x2, A, B, C)
-    elif func_min_offset == 1:
-        A, B, C, D = para
-        y2 = func(x2, A, B, C, D)
-    elif func_min_offset == 3:
-        A, B = para
-        y2 = func(x2, A, B)
-    return y2
+# def predict(data):
+#     para, func, func_min_offset = nihe(data)
+#     if func_min_offset == -1:
+#         return [0]
+#     x2 = np.arange(0, len(data) + 20)
+#     y2 = None
+#     if func_min_offset == 0 or func_min_offset == 2:
+#         A, B, C = para
+#         y2 = func(x2, A, B, C)
+#     elif func_min_offset == 1:
+#         A, B, C, D = para
+#         y2 = func(x2, A, B, C, D)
+#     elif func_min_offset == 3:
+#         A, B = para
+#         y2 = func(x2, A, B)
+#     return y2
 
 def operate(stock_position, price, amount, operation, record):
     if operation == 'b':
