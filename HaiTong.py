@@ -17,9 +17,9 @@ start = time.clock()
 #     names = []
 #     price = []
 #     for xx in codes:
-#         data = ts.get_realtime_quotes(xx)
-#         names.append(data.at[0, 'name'])
-#         price.append(data.at[0, 'price'])
+#         graph_data = ts.get_realtime_quotes(xx)
+#         names.append(graph_data.at[0, 'name'])
+#         price.append(graph_data.at[0, 'price'])
 #     time.sleep(5)
 #     print('\n' + ti )
 #     print(" | ".join(names))

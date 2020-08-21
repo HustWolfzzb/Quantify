@@ -220,9 +220,9 @@ def get_all_hist_data_by_pro():
 
 
 if __name__ == '__main__':
-    # data = ts_getData('399106')
-    # print(data)
-    # saveData(data, '600228')
+    # graph_data = ts_getData('399106')
+    # print(graph_data)
+    # saveData(graph_data, '600228')
     # updateData('000018')
     # get_all_hushen_data()
     graph = Graph('http://localhost:11003', username='neo4j', password='zzb162122')

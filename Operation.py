@@ -34,11 +34,11 @@ def is_openMartket(pro):
         return 0
     return 1
 
-# def predict(data):
-#     para, func, func_min_offset = nihe(data)
+# def predict(graph_data):
+#     para, func, func_min_offset = nihe(graph_data)
 #     if func_min_offset == -1:
 #         return [0]
-#     x2 = np.arange(0, len(data) + 20)
+#     x2 = np.arange(0, len(graph_data) + 20)
 #     y2 = None
 #     if func_min_offset == 0 or func_min_offset == 2:
 #         A, B, C = para

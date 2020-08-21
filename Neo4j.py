@@ -254,7 +254,7 @@ def get_Graph():
 if __name__ == '__main__':
     graph = get_Graph()
     # graph = Graph('http://39.99.253.203:7474', username='neo4j', password='zzb162122')
-    # createNode_1(graph, 'data/holders_stock.csv')
+    # createNode_1(graph, 'graph_data/holders_stock.csv')
     # update_neo4j_stock_finance_info(graph)
     # update_stock_basics(graph)
     # update_proppertity_for_neo4j(graph, {"pe":"市盈率",

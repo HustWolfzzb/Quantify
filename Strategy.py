@@ -398,9 +398,9 @@ if __name__ == '__main__':
     #         print("%s, Progress:%s / %s"%(table, count , all_len))
     #     if table.find('300') != 0:
     #         count += 1
-    #         data = cal_relation_with_open_close(table, show=True)
-    #         if data[0] > max_correlation:
-    #             max_correlation = data[0]
+    #         graph_data = cal_relation_with_open_close(table, show=True)
+    #         if graph_data[0] > max_correlation:
+    #             max_correlation = graph_data[0]
     #             max_table = table
     # print(max_table, max_correlation)
     find_nice_stock()
