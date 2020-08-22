@@ -5,16 +5,13 @@
 怎么对接进去
 先不管了睡觉
 """
-from random import randint
 
-from Entity import User,Stock
 import numpy as np
 from scipy.optimize import curve_fit
-from scipy.optimize import leastsq
 from datetime import datetime, timedelta
-from Data import get_stock_basics, get_hist_data, get_realtime_price
-from Neo4j import get_Graph
-from Mysql import get_all_columns_with_label, get_all_stock_symbol
+from DataEngine.Data import get_stock_basics, get_hist_data
+from DataEngine.Neo4j import get_Graph
+from DataEngine.Mysql import get_all_columns_with_label
 
 
 def hist_predict(stock='600196'):
@@ -24,7 +21,7 @@ def hist_predict(stock='600196'):
     #         all_hist[x][idx] = round(all_hist[x][idx], 0)
     # with open("cache/all_hist_p_price.txt", 'w', encoding='utf8') as o:
     #     o.write(str(all_hist))
-    with open("cache/all_hist_p_price.txt", 'r', encoding='utf8') as i:
+    with open("../cache/all_hist_p_price.txt", 'r', encoding='utf8') as i:
         all_hist = eval(i.read())
     target = all_hist[stock]
     alen = len(all_hist)

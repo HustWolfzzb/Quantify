@@ -1,10 +1,9 @@
-from random import random, randint
+from random import randint
 
 import tushare as ts
 
-from datetime import datetime, time, timedelta, date
+from datetime import datetime, time, date
 from time import sleep
-import numpy as np
 import easyquotation
 # from Strategy import nihe
 from Data import get_realtime_price, get_pro
@@ -542,11 +541,11 @@ def can_I_go(record, price, type):
         return False
 
 def update_Lock_para(para):
-    with open('cache/lock_para.txt', 'w', encoding='utf8') as f:
+    with open('../cache/lock_para.txt', 'w', encoding='utf8') as f:
         f.write(str(para))
 
 def run(user, rate = 0.01, amount = 100):
-    with open('cache/lock_para.txt','r', encoding='utf8') as f:
+    with open('../cache/lock_para.txt', 'r', encoding='utf8') as f:
         para = eval(f.read())
     stocks = user.stock.get_position()
     symbols = []

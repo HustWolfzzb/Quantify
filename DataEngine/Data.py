@@ -31,6 +31,7 @@ def save_realtime_price(code, name, ktype='5'):
                     out.write(", ".join(x[1]))
                     out.write("\n")
 
+
 def get_realtime_price(code='sh', ktype='5'):
     time_price = ts.get_hist_data(code, ktype=ktype)
     date_prices = {}
