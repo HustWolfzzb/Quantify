@@ -4,7 +4,8 @@ import datetime
 import tushare as ts
 
 
-import pandas as pd
+import pandas as p
+d
 
 def get_pro():
     return ts.pro_api('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
