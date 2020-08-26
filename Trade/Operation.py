@@ -6,7 +6,7 @@ from datetime import datetime, time, date
 from time import sleep
 import easyquotation
 # from Strategy import nihe
-from Data import get_realtime_price, get_pro
+from DataEngine.Data import get_realtime_price, get_pro
 
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30
@@ -19,7 +19,6 @@ AFTERNOON_END = time(15, 00)
 symbol = ["002164","002517","002457","600723","600918","600720","603187","002271","000759","000735","601933"]
 stock_name =["宁波东力","恺英网络","青龙管业","首商股份","中泰证券","祁连山","海容冷链","东方雨虹","中百集团","罗牛山","永辉超市"]
 stock_code = { symbol[x]:stock_name[x] for x in range(len(symbol))}
-qo = easyquotation.use('sina')
 
 def is_openMartket(pro):
     today_date = str(date.today().isoformat()).replace('-', '')

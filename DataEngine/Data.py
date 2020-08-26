@@ -1,17 +1,65 @@
+
+"""
+本模块主要用于构架数据引擎的关于网络数据的获取
+其中，主要实现：
+
+:function
+    * 股票历史数据的获取
+    * 股票实时数据获取
+    * 股票当天数据获取
+    * 历史数据存入Mysql
+    * 股票属性（市盈率，市净率等）以图数据库形式存入Neo4j中
+
+"""
+
 import random
 import datetime
-
+import easyquotation
 import tushare as ts
-
-
 import pandas as pd
 
+
+"""
+获取Tushare的pro权限账户
+:param
+    None
+:return
+    pro
+"""
 def get_pro():
     return ts.pro_api('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
 
 
-
+"""
+此处为获取全局的工具：
+    qo为快速获取实时股票信息的接口
+    pro为 Tushare pro版本接口
+"""
+qo = easyquotation.use('sina')
 pro = get_pro()
+
+
+"""
+获取股票当下信息
+:param
+    * code:股票代码，可以是'000759'，也可以是['000759','000043']
+:return
+    {
+    '000759': 
+            {'name': '中百集团',
+              'open': 7.08,
+              'close': 7.08,
+              'now': 6.97,
+              'high': 7.12,
+              'low': 6.94,
+            },
+    'xxxxxx':
+            {...}
+    } 
+"""
+def realTimePrice(code):
+    return qo.stocks(code)
+
 
 
 def save_realtime_price(code, name, ktype='5'):
@@ -32,6 +80,24 @@ def save_realtime_price(code, name, ktype='5'):
                     out.write("\n")
 
 
+"""
+:function
+获取历史分时记录。最新到当前时间，一共350条记录
+
+:param
+    * code:股票代码
+    * ktype:获取数据类型
+        * '5' ：五分钟间隔获取数据（默认值）
+        * '15'：15mins
+        * '60'：60mins
+        * 'D'：按天
+
+:returns
+    {
+        '2020-08-10':[10.01, 11.01.....],
+        '2020-08-11':[12.01, 13.01.....],
+    }
+"""
 def get_realtime_price(code='sh', ktype='5'):
     time_price = ts.get_hist_data(code, ktype=ktype)
     date_prices = {}
@@ -43,12 +109,46 @@ def get_realtime_price(code='sh', ktype='5'):
             date_prices[date].append(float(time_price.at[x, 'open']))
     for s in date_prices.keys():
         date_prices[s].reverse()
-    return sorted(date_prices.items(),key=lambda date_prices:date_prices[0],reverse=False)
+    return sorted(date_prices.items(), key=lambda date_prices:date_prices[0],reverse=False)
 
 
+"""
+:function
+    获取大盘所有股票的基础信息
+:returns
+    Dataframe结构，索引为股票代码，列名如下：
+        Index(['name', 'industry', 'area', 'pe', 'outstanding', 'totals',
+           'totalAssets', 'liquidAssets', 'fixedAssets', 'reserved',
+           'reservedPerShare', 'esp', 'bvps', 'pb', 'timeToMarket', 'undp',
+           'perundp', 'rev', 'profit', 'gpr', 'npr', 'holders'],
+          dtype='object')
+       name,名称
+       industry,细分行业
+       area,地区
+       pe,市盈率
+       outstanding,流通股本
+       totals,总股本(万)
+       totalAssets,总资产(万)
+       liquidAssets,流动资产
+       fixedAssets,固定资产
+       reserved,公积金
+       reservedPerShare,每股公积金
+       esp,每股收益
+       bvps,每股净资
+       pb,市净率
+       timeToMarket,上市日期
+"""
 def get_stock_basics():
     return ts.get_stock_basics()
 
+"""
+:function
+    获取一只股票的金融信息，包含很多。。官网看吧
+:param
+    * ts_code：股票代码，记得带市场，例如：'000759.SZ'
+:return
+    * Dataframe 108 columns
+"""
 def get_fina_indicator(ts_code):
     return pro.fina_indicator(ts_code = ts_code)
 
