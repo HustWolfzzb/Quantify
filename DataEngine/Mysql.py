@@ -10,6 +10,14 @@ keys = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'm
 
 
 def executeSQL(connect, conn, strs, query=False):
+    """
+
+    :param connect: 输入mysql的 connect
+    :param conn: 输入mysql 的 会话
+    :param strs: 查询语句
+    :param query: 是否为查询语句，True则返回，否则为在Mysql内部操作
+    :return: 如果查询参数为真，则返回查询结果
+    """
     try:
         if isinstance(strs, list):
             for str in strs:
@@ -26,6 +34,10 @@ def executeSQL(connect, conn, strs, query=False):
         return results
 
 def connectSQL():
+    """
+
+    :return: mysql的连接和会话
+    """
     connect = pymysql.connect(  # 连接数据库服务器
         user="root",
         password="zzb162122",
@@ -38,11 +50,22 @@ def connectSQL():
     return connect, conn
 
 def closeSQL( connect, conn):
+    """
+
+    :param connect:
+    :param conn:
+    :return: 关闭连接和会话
+    """
     conn.close()
     connect.close()
 
 
 def createTable(code):
+    """
+
+    :param code: 输入的股票代码，也是mysql中的表名
+    :return:
+    """
     connect, conn = connectSQL()
     sql_createTb = "CREATE TABLE `" + code + """`  (
                         `TIME` date	 NOT NULL,
@@ -67,6 +90,12 @@ def createTable(code):
 
 
 def saveData(dataframe, code):
+    """
+    将数据存储到mysql中
+    :param dataframe:
+    :param code:
+    :return:
+    """
     # engine = create_engine('mysql+pymysql://root:zzb162122@localhost:3306/STOCK', encoding='utf8')
     connect, conn = connectSQL()
     insertSQL = []
@@ -89,6 +118,11 @@ connect, conn = connectSQL()
 existTables = [ x[0] for x in list(executeSQL(connect, conn, 'show tables;', True)) ]
 
 def updateData(code):
+    """
+    更新到最新的基础数据
+    :param code:
+    :return:
+    """
     try:
         connect, conn = connectSQL()
         if code not in existTables:
@@ -117,10 +151,16 @@ def updateData(code):
         print(e)
 
 def get_all_stock_symbol():
+    """
+    :return: 返回所有的股票代码
+    """
     existTables = [x[0] for x in list(executeSQL(connect, conn, 'show tables;', True))]
     return existTables
 
-def get_all_hushen_data(filename = 'stockName.xlsx'):
+def get_all_hushen_data():
+    """
+    :return: 获取所有的股票数据存储到mysql，但是是限于近期的，列数多但是行数不够
+    """
     df = get_pro_stock_basic()
     symbol = df['symbol'].tolist()
     names = df['name'].tolist()
@@ -142,7 +182,10 @@ def get_all_hushen_data(filename = 'stockName.xlsx'):
             print("在%s 没拉取成功"%code)
             continue
 
-def update_all_hushen_data(graph):
+def update_all_hushen_data():
+    """
+    :return: 更新所有的股票数据存储到mysql，配合get_all_hushen_data使用
+    """
     codes = list(get_pro_stock_basic()['symbol'])
     count = -1
     length = len(codes)
@@ -162,17 +205,33 @@ def update_all_hushen_data(graph):
             continue
 
 def get_all_columns_with_label(label, existTables = []):
+    """
+    根据label和代码列表， 获取所有的数据
+    :param label: 需要获取的列表
+    :param existTables: 需要获取的代码
+    :return: 返回所有给定代码相应的label对应的值：
+        ['600601':[10.1,10.2,10.4...],]
+    """
     if len(existTables) == 0:
         existTables =[x[0] for x in list(executeSQL(connect, conn, 'show tables;', True))]
     stock_hist_label = {}
     for table in existTables:
         if table.find('300') == 0:
             continue
-        getColumnSQL = "select " + label + " from `" + table + "` order by TIME;"
-        stock_hist_label[table] = [x[0] for x in list(executeSQL(connect, conn, getColumnSQL, True))]
+        if isinstance(label, str):
+            getColumnSQL = "select " + label + " from `" + table + "` order by TIME;"
+            stock_hist_label[table] = [x[0] for x in list(executeSQL(connect, conn, getColumnSQL, True))]
+
+        else:
+            getColumnSQL = "select " + ",".join(label) + " from `" + table + "` order by TIME;"
+            stock_hist_label[table] = [x for x in list(executeSQL(connect, conn, getColumnSQL, True))]
+
     return stock_hist_label
 
 def get_all_hist_data_by_pro():
+    """
+    :return: 获取十年以上的历史数据。通过pro接口
+    """
     all_data = get_pro_stock_basic()
     ts_code = list(all_data.ts_code)
     symbol = list(all_data.symbol)

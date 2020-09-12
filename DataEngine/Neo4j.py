@@ -62,6 +62,17 @@ def createIndexNode(graph):
 # def add_profit_data():
 
 def getNode(graph, label, propertity, value, limit_num=10, fuzzy_search = False, createNode = False):
+    """
+    获取节点，如果没有这个节点，就创建
+    :param graph: 图
+    :param label: 类型
+    :param propertity: 属性名
+    :param value: 属性值
+    :param limit_num: 限制返回数目
+    :param fuzzy_search: 是否模糊搜索
+    :param createNode: 是否创建新的node
+    :return: 返回查询到的node或者是新创建的node
+    """
     createNode = False
     matcher = NodeMatcher(graph)
     where = ""
@@ -91,6 +102,11 @@ def getNode(graph, label, propertity, value, limit_num=10, fuzzy_search = False,
 
 
 def update_neo4j_stock_profit_info(graph):
+    """
+    更新所有的股票节点的当日信息
+    :param graph:  操作的图
+    :return: 无返回
+    """
     dataframe = get_stock_basics()
     para_en = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
     paras_cn = ["开盘价", "最高价", "收盘价","最低价","成交量","价格变动","涨跌幅","五日均价","十日均价","二十日均价","五日均量","十日均量","二十日均量"]
@@ -143,7 +159,11 @@ def update_neo4j_stock_profit_info(graph):
 
 
 def update_neo4j_stock_finance_info(graph):
-
+    """
+    更新每个股票节点的财务信息
+    :param graph: 图
+    :return: 无
+    """
     # para_en = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
     # paras_cn = ["开盘价", "最高价", "收盘价","最低价","成交量","价格变动","涨跌幅","五日均价","十日均价","二十日均价","五日均量","十日均量","二十日均量"]
     code_in_Neo4j = [x['n.stock_id'] for x in graph.run("match (n:`股票`) return n.stock_id").data()]
@@ -186,10 +206,21 @@ def update_neo4j_stock_finance_info(graph):
 
 
 def update_proppertity_for_neo4j(graph, old_new_propertity):
+    """
+    更新属性的名称
+    :param graph: 图
+    :param old_new_propertity: 新的老的属性值的名字字典
+    :return:
+    """
     for old in old_new_propertity.keys():
         graph.run("match(n) where exists(n.%s) set n.%s = n.%s remove n.%s"%(old, old_new_propertity[old], old, old))
 
 def update_stock_basics(graph):
+    """
+    更新股票节点的相关节点信息
+    :param graph:
+    :return:
+    """
     paras2cn = {"code":"代码",
                 "name":"名称",
                 "industry":"细分行业",
@@ -249,6 +280,10 @@ def update_stock_basics(graph):
 
 
 def get_Graph():
+    """
+    返回图
+    :return: 图
+    """
     return Graph('http://localhost:11003', username='neo4j', password='zzb162122')
 
 if __name__ == '__main__':

@@ -39,66 +39,47 @@ qo = easyquotation.use('sina')
 pro = get_pro()
 
 
-"""
-获取股票当下信息
-:param
-    * code:股票代码，可以是'000759'，也可以是['000759','000043']
-:return
-    {
-    '000759': 
-            {'name': '中百集团',
-              'open': 7.08,
-              'close': 7.08,
-              'now': 6.97,
-              'high': 7.12,
-              'low': 6.94,
-            },
-    'xxxxxx':
-            {...}
-    } 
-"""
 def realTimePrice(code):
+    """
+    获取股票当下信息
+    :param
+        * code:股票代码，可以是'000759'，也可以是['000759','000043']
+    :return
+        {
+        '000759':
+                {'name': '中百集团',
+                  'open': 7.08,
+                  'close': 7.08,
+                  'now': 6.97,
+                  'high': 7.12,
+                  'low': 6.94,
+                },
+        'xxxxxx':
+                {...}
+        }
+    """
     return qo.stocks(code)
 
 
+def get_tick_price(code='sh', ktype='5'):
+    """
+    :function
+    获取历史分时记录。最新到当前时间，一共350条记录
 
-def save_realtime_price(code, name, ktype='5'):
-    if type(code) == str and type(name) == str:
-        with open('histTickData/%s-%s.txt'%(code, name), 'a', encoding='utf8') as out:
-            date_price = get_realtime_price(code, ktype)
-            for x in date_price:
-                out.write("时间：%s\n" % x[0])
-                out.write(", ".join(x[1]))
-                out.write("\n")
-    elif type(code) == list and type(name) == list:
-        for idx in range(len(code)):
-            with open('tickData/%s-%s.txt' % (code[idx], name[idx]), 'a', encoding='utf8') as out:
-                date_price = get_realtime_price(code[idx], ktype)
-                for x in date_price:
-                    out.write("时间：%s\n" % x[0])
-                    out.write(", ".join(x[1]))
-                    out.write("\n")
+    :param
+        * code:股票代码
+        * ktype:获取数据类型
+            * '5' ：五分钟间隔获取数据（默认值）
+            * '15'：15mins
+            * '60'：60mins
+            * 'D'：按天
 
-
-"""
-:function
-获取历史分时记录。最新到当前时间，一共350条记录
-
-:param
-    * code:股票代码
-    * ktype:获取数据类型
-        * '5' ：五分钟间隔获取数据（默认值）
-        * '15'：15mins
-        * '60'：60mins
-        * 'D'：按天
-
-:returns
-    {
-        '2020-08-10':[10.01, 11.01.....],
-        '2020-08-11':[12.01, 13.01.....],
-    }
-"""
-def get_realtime_price(code='sh', ktype='5'):
+    :returns
+        {
+            '2020-08-10':[10.01, 11.01.....],
+            '2020-08-11':[12.01, 13.01.....],
+        }
+    """
     time_price = ts.get_hist_data(code, ktype=ktype)
     date_prices = {}
     for x in time_price.index:
@@ -112,44 +93,45 @@ def get_realtime_price(code='sh', ktype='5'):
     return sorted(date_prices.items(), key=lambda date_prices:date_prices[0],reverse=False)
 
 
-"""
-:function
-    获取大盘所有股票的基础信息
-:returns
-    Dataframe结构，索引为股票代码，列名如下：
-        Index(['name', 'industry', 'area', 'pe', 'outstanding', 'totals',
-           'totalAssets', 'liquidAssets', 'fixedAssets', 'reserved',
-           'reservedPerShare', 'esp', 'bvps', 'pb', 'timeToMarket', 'undp',
-           'perundp', 'rev', 'profit', 'gpr', 'npr', 'holders'],
-          dtype='object')
-       name,名称
-       industry,细分行业
-       area,地区
-       pe,市盈率
-       outstanding,流通股本
-       totals,总股本(万)
-       totalAssets,总资产(万)
-       liquidAssets,流动资产
-       fixedAssets,固定资产
-       reserved,公积金
-       reservedPerShare,每股公积金
-       esp,每股收益
-       bvps,每股净资
-       pb,市净率
-       timeToMarket,上市日期
-"""
 def get_stock_basics():
+    """
+    :function
+        获取大盘所有股票的基础信息
+    :returns
+        Dataframe结构，索引为股票代码，列名如下：
+            Index(['name', 'industry', 'area', 'pe', 'outstanding', 'totals',
+               'totalAssets', 'liquidAssets', 'fixedAssets', 'reserved',
+               'reservedPerShare', 'esp', 'bvps', 'pb', 'timeToMarket', 'undp',
+               'perundp', 'rev', 'profit', 'gpr', 'npr', 'holders'],
+              dtype='object')
+           name,名称
+           industry,细分行业
+           area,地区
+           pe,市盈率
+           outstanding,流通股本
+           totals,总股本(万)
+           totalAssets,总资产(万)
+           liquidAssets,流动资产
+           fixedAssets,固定资产
+           reserved,公积金
+           reservedPerShare,每股公积金
+           esp,每股收益
+           bvps,每股净资
+           pb,市净率
+           timeToMarket,上市日期
+    """
     return ts.get_stock_basics()
 
-"""
-:function
-    获取一只股票的金融信息，包含很多。。官网看吧
-:param
-    * ts_code：股票代码，记得带市场，例如：'000759.SZ'
-:return
-    * Dataframe 108 columns
-"""
+
 def get_fina_indicator(ts_code):
+    """
+    :function
+        获取一只股票的金融信息，包含很多。。官网看吧
+    :param
+        * ts_code：股票代码，记得带市场，例如：'000759.SZ'
+    :return
+        * Dataframe 108 columns
+    """
     return pro.fina_indicator(ts_code = ts_code)
 
 def get_index():
@@ -191,8 +173,8 @@ def get_hist_data(code = '600355', start = "2000-01-01", end = "2020-07-15" ):
 
 
 if __name__ == '__main__':
-    # get_realtime_price('sh')
+    # get_tick_price('sh')
 
     symbol = ["002164", "002517", "002457", "600723", "600918", "600720", "603187", "002271", "000759", "000735", "601933"]
     stock_name = ["宁波东力", "恺英网络", "青龙管业", "首商股份", "中泰证券", "祁连山", "海容冷链", "东方雨虹", "中百集团", "罗牛山", "永辉超市"]
-    save_realtime_price(symbol, stock_name, '5')
+    print("数据驱动引擎，获取数据的总接口")

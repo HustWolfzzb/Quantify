@@ -6,7 +6,7 @@ from datetime import datetime, time, date
 from time import sleep
 import easyquotation
 # from Strategy import nihe
-from DataEngine.Data import get_realtime_price, get_pro
+from DataEngine.Data import get_tick_price, get_pro
 
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30
@@ -92,7 +92,7 @@ def test(rate = 0.003, amount = 200, symbols=[] , stock_names=[] ):
     for symbol_idx in range(len(symbols)):
         symbol = symbols[symbol_idx]
         stock_name = stock_names[symbol_idx]
-        date_price = get_realtime_price(symbol, '5')
+        date_price = get_tick_price(symbol, '5')
 
         try:
             start_price = date_price[0][1][0]
@@ -177,7 +177,7 @@ def ZhongBai(rate = 0.002, amount = 100 , k_type='5'):
     record = []
     symbol = '000759'
     stock_name = '中百集团'
-    date_price = get_realtime_price(symbol, k_type)
+    date_price = get_tick_price(symbol, k_type)
 
     try:
         start_price = date_price[0][1][0]
@@ -267,7 +267,7 @@ def base_line(rate = 0.002, amount = 100 , k_type='5'):
     symbol = '000759' \
              ''
     stock_name = '中百集团'
-    date_price = get_realtime_price(symbol, k_type)
+    date_price = get_tick_price(symbol, k_type)
 
     try:
         start_price = date_price[0][1][0]
@@ -345,7 +345,7 @@ def JiZhunCeLue(rate = 0.002, amount = 100 , k_type='15'):
     record = []
     symbol = '000759'
     stock_name = '中百集团'
-    date_price = get_realtime_price(symbol, k_type)
+    date_price = get_tick_price(symbol, k_type)
 
     try:
         start_price = date_price[0][1][0]
@@ -426,7 +426,7 @@ def new_test(rate = 0.003, amount = 100, symbols=[] , stock_names=[] ):
     for symbol_idx in range(len(symbols)):
         symbol = symbols[symbol_idx]
         stock_name = stock_names[symbol_idx]
-        date_price = get_realtime_price(symbol, '5')
+        date_price = get_tick_price(symbol, '5')
 
         try:
             start_price = date_price[0][1][0]
