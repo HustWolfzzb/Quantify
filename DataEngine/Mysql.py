@@ -1,17 +1,29 @@
+"""
+这部分代码主要是为了执行与Mysql相关的操作，包括：
+    * Mysql通讯接口 connectSQL & closeSQL
+    * Mysql代码执行，包括查询和非查询模式 executeSQL
+    * 创建个股数据表 createTable
+    * 批量存储数据到Mysql saveData
+    * 更新Mysql数据库里面个股最后日期到今天的数据 updateData
+    * 更新Mysql数据库里面所有股票最后日期到今天的数据 update_all_hushen_data
+    * 获取当前的Mysql中所有的表名 get_all_stock_symbol
+    * 存储所有的沪深股票的历史数据（limited)： get_all_hushen_data
+    * 存储所有的沪深股票的历史数据，by pro： get_all_hushen_data
+    * 根据label和代码获取所有相关个股的对应label的所有数据 get_all_columns_with_label
+    *
+"""
 from py2neo import Graph
 import time
-
 import datetime
-
 from DataEngine.Data import get_hist_data, get_pro_daily, get_pro_stock_basic
-
 import pymysql
+
+
 keys = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
 
 
 def executeSQL(connect, conn, strs, query=False):
     """
-
     :param connect: 输入mysql的 connect
     :param conn: 输入mysql 的 会话
     :param strs: 查询语句
@@ -23,7 +35,6 @@ def executeSQL(connect, conn, strs, query=False):
             for str in strs:
                 conn.execute(str)
         else:
-
                 conn.execute(strs)
     except AttributeError as ae:
         print(ae)
@@ -62,7 +73,6 @@ def closeSQL( connect, conn):
 
 def createTable(code):
     """
-
     :param code: 输入的股票代码，也是mysql中的表名
     :return:
     """

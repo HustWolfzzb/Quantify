@@ -4,13 +4,18 @@
 其中，主要实现：
 
 :function
-    * 股票历史数据的获取
-    * 股票实时数据获取
+    * 股票历史分时数据的获取 get_tick_price
+    * 股票历史日K数据的获取 get_hist_data
+    * 股票实时数据获取 realTimePrice
     * 股票当天数据获取
+    * 获取A股市场里面所有的股票的基础数据 get_stock_basics
+    * 获取某只股票的财务数据，比如市盈率roe等 get_fina_indicator
+    * 获取大盘一些指数的数据
     * 历史数据存入Mysql
     * 股票属性（市盈率，市净率等）以图数据库形式存入Neo4j中
 
 """
+
 
 import random
 import datetime
