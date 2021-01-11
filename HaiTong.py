@@ -181,8 +181,6 @@ def spy_price():
             gap = change_[code_idx]
             if start:
                 start = False
-                sell_amount = 100
-                buy_amount = 100
                 # print("挂 Sell %s, %s, %s, %s" % (names[code_idx], close_price + gap, amount , round(now_price / price_close[code_idx], 3)))
                 sell_id = user.sell(codes[code_idx], now_price + gap, sell_amount)
                 # print("挂 Buy %s, %s, %s, %s" % (names[code_idx], close_price - gap, amount , round(now_price / price_close[code_idx], 3)))
@@ -202,8 +200,6 @@ def spy_price():
                 buy_id = user.sell(codes[code_idx], now_price - gap, buy_amount)['entrust_no']
                 # print("挂 Sell %s, %s, %s, %s" % (names[code_idx], now_price + gap, amount, round(now_price / price_close[code_idx], 3)))
                 # print("挂 Buy %s, %s, %s, %s" % (names[code_idx], now_price - gap, amount, round(now_price / price_close[code_idx], 3)))
-
-
 
             elif now_price <= operate_price[code_idx] - gap:
                 # use += op_amount
