@@ -50,3 +50,5 @@ if __name__ == '__main__':
     print(money +  data[-1][-1][-1] * amount)
 
     print(fund_basic())
+
+

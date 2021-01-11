@@ -40,8 +40,12 @@ def get_pro():
     qo为快速获取实时股票信息的接口
     pro为 Tushare pro版本接口
 """
-qo = easyquotation.use('sina')
+
+def get_qo():
+    return easyquotation.use('sina')
+qo = get_qo()
 pro = get_pro()
+
 
 def get_news(src='sina', start_date='2018-11-21 09:00:00', end_date='2018-11-22 10:10:00'):
     return pro.news()
