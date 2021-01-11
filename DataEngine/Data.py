@@ -43,6 +43,9 @@ def get_pro():
 qo = easyquotation.use('sina')
 pro = get_pro()
 
+def get_news(src='sina', start_date='2018-11-21 09:00:00', end_date='2018-11-22 10:10:00'):
+    return pro.news()
+
 
 def realTimePrice(code):
     """
@@ -97,6 +100,9 @@ def get_tick_price(code='sh', ktype='5'):
         date_prices[s].reverse()
     return sorted(date_prices.items(), key=lambda date_prices:date_prices[0],reverse=False)
 
+
+def fund_basic(market='E'):
+    pro.fund_basic(market='E')
 
 def get_stock_basics():
     """
@@ -175,7 +181,6 @@ def get_hist_data(code = '600355', start = "2000-01-01", end = "2020-07-15" ):
     """
     df = ts.get_hist_data(code, start, end, ktype='D')
     return df
-
 
 if __name__ == '__main__':
     # get_tick_price('sh')

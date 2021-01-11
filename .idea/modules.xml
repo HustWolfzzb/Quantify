@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Quantify.iml" filepath="$PROJECT_DIR$/.idea/Quantify.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../TransE/.idea/TransE.iml" filepath="$PROJECT_DIR$/../TransE/.idea/TransE.iml" />
     </modules>
   </component>
 </project>
