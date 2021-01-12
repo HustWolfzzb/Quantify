@@ -186,7 +186,7 @@ def spy_price():
                     # print("挂 Sell %s, %s, %s, %s" % (names[code_idx], close_price + gap, amount , round(now_price / price_close[code_idx], 3)))
                     sell_id = user.sell(codes[code_idx],  round(now_price + gap, 3), sell_amount)
                     # print("挂 Buy %s, %s, %s, %s" % (names[code_idx], close_price - gap, amount , round(now_price / price_close[code_idx], 3)))
-                    buy_id = user.sell(code, round(now_price - gap, 3), buy_amount)['entrust_no']
+                    buy_id = user.buy(code, round(now_price - gap, 3), buy_amount)['entrust_no']
                     # op_amount = 100
 
                 if now_price >= operate_price[code_idx] + gap:
@@ -198,7 +198,7 @@ def spy_price():
                     # op_amount = amount
                     operate_price[code_idx] = now_price
                     sell_id = user.sell(codes[code_idx],  round(now_price + gap, 3), sell_amount)['entrust_no']
-                    print("挂 Sell %s, %s, %s, %s" %(names[code_idx], round(now_price - gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
+                    print("挂 Sell %s, %s, %s, %s" %(names[code_idx], round(now_price + gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
                     if buy_id != '':
                         user.cancel_entrust(buy_id)
                     buy_id = user.buy(codes[code_idx],  round(now_price - gap, 3), buy_amount)['entrust_no']
@@ -217,7 +217,7 @@ def spy_price():
                     if sell_id != '':
                         user.cancel_entrust(sell_id)
                     sell_id = user.sell(codes[code_idx],  round(now_price + gap, 3), sell_amount)['entrust_no']
-                    print("挂 Sell %s, %s, %s, %s" %(names[code_idx], round(now_price - gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
+                    print("挂 Sell %s, %s, %s, %s" %(names[code_idx], round(now_price + gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
             except KeyError as e:
                 print(e)
             except Exception as e:
