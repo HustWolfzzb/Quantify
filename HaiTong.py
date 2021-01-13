@@ -10,8 +10,8 @@ user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\ht
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
 qo = get_qo()
-codes = ['159992','512900','515650','159801','515880']
-names = [ '创新药', '证券基金', '消费50','芯片基金','通信etf']
+codes = ['512900','515650','159801','515880']
+names = [ '证券基金', '消费50','芯片基金','通信etf']
 change_ = [0.004, 0.004, 0.005, 0.004]
 
 class User():
@@ -70,42 +70,45 @@ for x in codes:
     open_sell[x] = []
     open_buy[x] = []
 price_close = get_all_price()
-price_close = [price_close[x]['open'] for x in codes]
+price_close = [price_close[x]['close'] for x in codes]
 operate = [100,200,300,400,500,600,800,900,1000,1200,1400,1600,2000,2500,3000]
 
 def open_grid_buy():
 
-    # pos = user.position
-    # keyong_money = user.balance['可用金额']
-    # keyong_amount = []
-    # for code in codes:
-    #     for p in pos:
-    #         if p['证券代码'] == code:
-    #             keyong_amount.append(p['可用余额'])
-
-    price_close = [1.431, 1.196, 1.814, 1.312]
-    keyong_money = 20000
-    keyong_amount = [8100, 3600, 5500, 200]
-
+    pos = user.position
+    keyong_money = user.balance['可用金额']
+    keyong_amount = []
+    for code in codes:
+        for p in pos:
+            if p['证券代码'] == code:
+                keyong_amount.append(p['可用余额'])
+    print(keyong_amount)
+    # price_close = [1.431, 1.196, 1.814, 1.312]
+    # keyong_money = 20000
+    # keyong_amount = [8100, 3600, 5500, 200]
 #     #开盘的时候挂卖盘
     for code_idx in range(len(codes)):
         price =  price_close[code_idx]
         ka = keyong_amount[code_idx]
-        for i in range(5):
-            for j in range(i+1):
-                if ka>pow(2,i) * 100:
-                    price += change_[code_idx]
-                    price = round(price, 3)
-                    # open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , pow(2,i) * 100))
-                    print("Sell %s, %s, %s, %s"%(names[code_idx], price, pow(2,i) * 100 , round(price/price_close[code_idx],3) ))
-                    ka -= pow(2,i) * 100
-                elif ka>100:
-                    price += change_[code_idx]
-                    price = round(price, 3)
-                    # open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , ka-100))
-                    print("Sell %s, %s, %s, %s"%(names[code_idx], price, ka-100 , round(price/price_close[code_idx],3) ))
-                    ka = 100
+        for i in range(4):
+            try:
 
+                for j in range(i+1):
+                    if ka>pow(2,i) * 100:
+                        price += change_[code_idx]
+                        price = round(price, 3)
+                        open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , pow(2,i) * 100))
+                        print("Sell %s, %s, %s, %s"%(names[code_idx], price, pow(2,i) * 100 , round(price/price_close[code_idx],3) ))
+                        ka -= pow(2,i) * 100
+                    elif ka>100:
+                        price += change_[code_idx]
+                        price = round(price, 3)
+                        # open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , ka-100))
+                        print("Sell %s, %s, %s, %s"%(names[code_idx], price, ka-100 , round(price/price_close[code_idx],3) ))
+                        ka = 100
+            except Excepption as e:
+                if str(e).find("客户股票不足"):
+                    print("客户%s股票不足"%names[code_idx])
 #     # 开盘的时候挂买盘
     km = keyong_money
     for code_idx in range(len(codes)):
@@ -228,5 +231,6 @@ def spy_price():
 
 
 if __name__ == '__main__':
-    spy_price()
+    # spy_price()
     # print(len(user.today_trades))
+    open_grid_buy()
