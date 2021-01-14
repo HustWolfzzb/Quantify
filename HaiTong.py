@@ -10,8 +10,10 @@ user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\ht
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
 qo = get_qo()
-codes = ['512900','515650','159801','515880']
-names = [ '证券基金', '消费50','芯片基金','通信etf']
+codes = ['515880']
+names = ['通信etf']
+# codes = ['512900','515650','159801','515880']
+# names = [ '证券基金', '消费50','芯片基金','通信etf']
 change_ = [0.004, 0.004, 0.005, 0.004]
 
 class User():
@@ -98,8 +100,9 @@ def open_grid_buy():
                     if ka>new_amount:
                         price += change_[code_idx]
                         price = round(price, 3)
-                        open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , new_amount))
+                        open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price, new_amount))
                         print("Sell %s, %s, %s, %s"%(names[code_idx], price, new_amount , round(price/price_close[code_idx],3) ))
+                        time.sleep(1)
                         ka -= new_amount
                     elif ka>100:
                         price += change_[code_idx]
@@ -234,7 +237,7 @@ def spy_price():
 if __name__ == '__main__':
     # spy_price()
     # print(len(user.today_trades))
-    # open_grid_buy()
-    print(user.today_trades)
+    open_grid_buy()
+    # print(user.today_trades)
     # [{'成交时间': '', '证券代码': '', '证券名称': '', '操作': '', '成交数量': 0, '成交均价': 0.0, '成交金额': 0.0, '合同编号': '0', '成交编号': '',
     #   'Unnamed: 9': ''}]
