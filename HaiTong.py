@@ -92,21 +92,22 @@ def open_grid_buy():
         ka = keyong_amount[code_idx]
         for i in range(4):
             try:
-
+                new_amount = pow(2, i) * 100
                 for j in range(i+1):
-                    if ka>pow(2,i) * 100:
+                    new_amount = pow(2,i) * 100
+                    if ka>new_amount:
                         price += change_[code_idx]
                         price = round(price, 3)
-                        open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , pow(2,i) * 100))
-                        print("Sell %s, %s, %s, %s"%(names[code_idx], price, pow(2,i) * 100 , round(price/price_close[code_idx],3) ))
-                        ka -= pow(2,i) * 100
+                        open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , new_amount))
+                        print("Sell %s, %s, %s, %s"%(names[code_idx], price, new_amount , round(price/price_close[code_idx],3) ))
+                        ka -= new_amount
                     elif ka>100:
                         price += change_[code_idx]
                         price = round(price, 3)
                         # open_sell[codes[code_idx]].append(user.sell(codes[code_idx], price , ka-100))
                         print("Sell %s, %s, %s, %s"%(names[code_idx], price, ka-100 , round(price/price_close[code_idx],3) ))
                         ka = 100
-            except Excepption as e:
+            except Exception as e:
                 if str(e).find("客户股票不足"):
                     print("客户%s股票不足"%names[code_idx])
 #     # 开盘的时候挂买盘
@@ -114,14 +115,15 @@ def open_grid_buy():
     for code_idx in range(len(codes)):
         price = price_close[code_idx]
         for i in range(3):
+            new_amount = pow(2, i) * 100
             for j in range(i + 1):
-                if km > (price-0.004) * pow(2, i) * 100:
+                if km > (price-0.004) * new_amount:
                     price -= change_[code_idx]
                     price = round(price, 3)
-                    #  open_buy.append(user.sell(codes[code_idx], price , pow(2,i) * 100))
+                    #  open_buy.append(user.sell(codes[code_idx], price , new_amount))
                     print("Buy %s, %s, %s, %s" % (
                     names[code_idx], price, pow(2, i) * 100, round(price / price_close[code_idx], 3)))
-                    km -= pow(2, i) * 100 * price
+                    km -= new_amount * price
                 elif km > 100 * (price-0.004):
                     amount = int(km / ((price - 0.004)*100))
                     price -= change_[code_idx]
@@ -207,7 +209,6 @@ def spy_price():
                         user.cancel_entrust(buy_ids[code_idx])
                     buy_ids[code_idx] = user.buy(codes[code_idx],  round(now_price - gap, 3), buy_amount)['entrust_no']
                     print("挂 Buy %s, %s, %s, %s" % (names[code_idx], round(now_price - gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
-
 
                 elif now_price <= operate_price[code_idx] - gap:
                     # use += op_amount
