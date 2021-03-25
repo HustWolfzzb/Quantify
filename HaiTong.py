@@ -10,11 +10,28 @@ user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\ht
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
 qo = get_qo()
-codes = ['515880']
-names = ['通信etf']
-# codes = ['512900','515650','159801','515880']
-# names = [ '证券基金', '消费50','芯片基金','通信etf']
+# codes = ['515880']
+# names = ['通信etf']
+codes = ['512900','515650','159801','515880']
+names = [ '证券基金', '消费50','芯片基金','通信etf']
 change_ = [0.004, 0.004, 0.005, 0.004]
+operate = [100,200,300,400,
+           500,600,800,900,
+           1000,1200,1400,1600,
+           2000,2500,3000,4000 ]
+open_sell = {}
+open_buy = {}
+for x in codes:
+    open_sell[x] = []
+    open_buy[x] = []
+
+
+def get_all_price(codes = codes):
+    return qo.stocks(codes)
+
+price_close = get_all_price()
+price_close = [price_close[x]['close'] for x in codes]
+
 
 class User():
     def __init__(self, user):
@@ -45,8 +62,8 @@ class User():
         return self.user.today_entrusts
 
     def show(self):
-        print("资金余额：%s\n可用资金：%s\n可取金额：%s\n总资产：%s\n"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan))
-        print("当前持仓股票:\n", self.stock.get_position())
+        print("资金余额：%s\n\t可用资金：%s\n\t可取金额：%s\n\t总资产：%s\n\t"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan))
+        print("当前持仓股票:\n\t", self.stock.get_position())
 
 class Stock():
     def __init__(self, position):
@@ -55,28 +72,58 @@ class Stock():
     def get_position(self):
         return self.position
 
-class ETF():
-    def __init__(self, price):
-        self
+class Trade():
+    def __init__(self, code, price, amount, type):
+        self.code = code
+        if code[0] == '5':
+            self.price = round(price,3)
+        else:
+            self.price = round(price,2)
+
+        self.amount = int(amount//100 * 100)
+        if type in ['buy', 'sell', 'b', 's']:
+            self.type = type
+        else:
+            print("委托类型不明",type)
+        self.id = ''
+        self.trade(self.code, self.price, self.amount, self.type)
+
+    def trade(self, code, price, amount, type):
+        if self.code !='' and self.price > 0 and self.amount and self.type in ['buy', 'sell', 'b', 's']:
+            if self.type in ['buy','b']:
+                try:
+                    buy_record = user.buy(self.code, self.price, self.amount)
+                    self.id = buy_record['entrust_no']
+                except KeyError as e:
+                    print("好像没有委托成功-->拿不到合同号：",str(e))
+                    print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+                except Exception as e:
+                    if str(e).find('不足'):
+                        print(str(e), names[self.code])
+                        print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+
+            elif self.type in ['sell','s']:
+                try:
+                    sell_record = user.sell(self.code, self.price, self.amount)
+                    self.id = sell_record['entrust_no']
+                except KeyError as e:
+                    print("好像没有委托成功-->拿不到合同号：",str(e))
+                    print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+
+                except Exception as e:
+                    if str(e).find('不足'):
+                        print(str(e), names[self.code])
+                        print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+        else:
+            print("数据不符合规范:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t"%(self.code,self.price,self.amount,self.type))
+
+    def cancel(self):
+        user.cancel_entrust(self.id)
 
 def get_Account():
     return User(user)
 
-def get_all_price(codes = codes):
-    return qo.stocks(codes)
-
-
-open_sell = {}
-open_buy = {}
-for x in codes:
-    open_sell[x] = []
-    open_buy[x] = []
-price_close = get_all_price()
-price_close = [price_close[x]['close'] for x in codes]
-operate = [100,200,300,400,500,600,800,900,1000,1200,1400,1600,2000,2500,3000]
-
 def open_grid_buy():
-
     pos = user.position
     keyong_money = user.balance['可用金额']
     keyong_amount = []
@@ -136,17 +183,11 @@ def open_grid_buy():
                     km -= amount * price
 
 
-# buy_price = [0]*len(codes)
-# sell_price = [0]*len(codes)
-# buy_amount = [0]*len(codes)
-# sell_amount = [0]*len(codes)
-
-
 def get_amount(now, close, gap):
     if now > close:
         return operate[int((now - close)//gap)]
     else:
-        return  operate[int((close - now)//gap)]
+        return operate[int((close - now)//gap)]
 
 #网格交易法
 def spy_price():
@@ -169,8 +210,8 @@ def spy_price():
 
     # use = 5500
     # money = operate_price[code_idx * use
-    sell_ids = ['' for x in range(len(codes))]
-    buy_ids = ['' for x in range(len(codes))]
+    sell_ids = {}
+    buy_ids = {}
     buy_amount = 100
     sell_amount = 100
     while True:
@@ -192,28 +233,39 @@ def spy_price():
                 if start:
                     start = False
                     # print("挂 Sell %s, %s, %s, %s" % (names[code_idx], close_price + gap, amount , round(now_price / price_close[code_idx], 3)))
-                    sell_ids[code_idx] = user.sell(code,  round(now_price + gap, 3), sell_amount)
+                    buy = Trade(code,  close_price - gap, buy_amount, 'b')
+                    buy_ids[code] = buy
                     # print("挂 Buy %s, %s, %s, %s" % (names[code_idx], close_price - gap, amount , round(now_price / price_close[code_idx], 3)))
-                    buy_ids[code_idx] = user.buy(code, round(now_price - gap, 3), buy_amount)['entrust_no']
+                    sell = Trade(code, close_price + gap, sell_amount, 's')
+                    sell_ids[code] = sell
                     # op_amount = 100
 
                 if now_price >= operate_price[code_idx] + gap:
+                    if sell_ids.get(code) == None:
+                        sell_ids[code] = Trade(code, now_price, sell_amount, 's')
+                    else:
+                        buy_amount = get_amount(now_price, close_price, gap)
+                        sell_amount = get_amount(now_price + gap, close_price, gap)
+                        # op_amount = amount
+                        operate_price[code_idx] = now_price
+                        sell_ids[code_idx] = user.sell(codes[code_idx], round(now_price + gap, 3), sell_amount)[
+                            'entrust_no']
+                        print("挂 Sell %s, %s, %s, %s" % (names[code_idx], round(now_price + gap, 3), buy_amount,
+                                                         round(now_price / price_close[code_idx], 3)))
+                        if buy_ids[code_idx] != '':
+                            print("撤买单%s" % sell_ids[code_idx])
+                            user.cancel_entrust(buy_ids[code_idx])
+                        buy_ids[code_idx] = user.buy(codes[code_idx], round(now_price - gap, 3), buy_amount)[
+                            'entrust_no']
+                        print("挂 Buy %s, %s, %s, %s" % (names[code_idx], round(now_price - gap, 3), buy_amount,
+                                                        round(now_price / price_close[code_idx], 3)))
                     # use -= op_amount
                     print("%s 价格：%s,的卖单 成交！"%(names[code_idx],operate_price[code_idx] + gap))
 
-                    buy_amount = get_amount(now_price, close_price, gap)
-                    sell_amount = get_amount(now_price + gap, close_price, gap)
-                    # op_amount = amount
-                    operate_price[code_idx] = now_price
-                    sell_ids[code_idx] = user.sell(codes[code_idx],  round(now_price + gap, 3), sell_amount)['entrust_no']
-                    print("挂 Sell %s, %s, %s, %s" %(names[code_idx], round(now_price + gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
-                    if buy_ids[code_idx] != '':
-                        print("撤买单%s" % sell_ids[code_idx])
-                        user.cancel_entrust(buy_ids[code_idx])
-                    buy_ids[code_idx] = user.buy(codes[code_idx],  round(now_price - gap, 3), buy_amount)['entrust_no']
-                    print("挂 Buy %s, %s, %s, %s" % (names[code_idx], round(now_price - gap, 3), buy_amount, round(now_price / price_close[code_idx], 3)))
 
                 elif now_price <= operate_price[code_idx] - gap:
+                    if buy_ids.get(code) == None:
+                        buy_ids[code] = Trade(code, now_price, buy_amount, 'b')
                     # use += op_amount
                     print("%s 价格：%s,的买单 成交！"%(names[code_idx],operate_price[code_idx] - gap))
                     buy_amount = get_amount(now_price - gap, close_price, gap)

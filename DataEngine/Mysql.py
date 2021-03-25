@@ -15,8 +15,10 @@
 from py2neo import Graph
 import time
 import datetime
-from DataEngine.Data import get_hist_data, get_pro_daily, get_pro_stock_basic
+from DataEngine.Data import  get_pro_daily, get_pro_stock_basic
 import pymysql
+from Config.Config import Config
+config = Config('ts').getInfo()
 
 
 keys = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
@@ -50,12 +52,12 @@ def connectSQL():
     :return: mysql的连接和会话
     """
     connect = pymysql.connect(  # 连接数据库服务器
-        user="root",
-        password="zzb162122",
-        host="127.0.0.1",
-        port=3306,
-        db="STOCK",
-        charset="utf8"
+        user=config['user'],
+        password=config['password'],
+        host=config['host'],
+        port=config['port'],
+        db=config['db'],
+        charset=config['charset']
     )
     conn = connect.cursor()
     return connect, conn
@@ -106,7 +108,6 @@ def saveData(dataframe, code):
     :param code:
     :return:
     """
-    # engine = create_engine('mysql+pymysql://root:zzb162122@localhost:3306/STOCK', encoding='utf8')
     connect, conn = connectSQL()
     insertSQL = []
     if dataframe.index == None:
@@ -181,7 +182,7 @@ def get_all_hushen_data():
         if count%100 == 0:
             print('[' + '=' * (count//100) + '>' + " "*((length-count)//100) + ']')
         try:
-            df = get_hist_data(code)
+            df = get_all_hist_data_by_pro(code)
         except Exception as e:
             print("%s 这只股票有问题！"%code)
             continue
@@ -209,7 +210,7 @@ def update_all_hushen_data():
             print("在%s 没拉取成功"%code)
         except pymysql.err.ProgrammingError as xe:
             print(xe)
-            saveData(get_hist_data(code),code)
+            saveData(get_all_hist_data_by_pro(code),code)
         except Exception as e:
             print("%s 这只股票有问题"%code)
             continue
@@ -292,6 +293,4 @@ if __name__ == '__main__':
     # saveData(graph_data, '600228')
     # updateData('000018')
     # get_all_hushen_data()
-    graph = Graph('http://localhost:11003', username='neo4j', password='zzb162122')
-    update_all_hushen_data(graph)
-    # get_all_hist_data_by_pro()
+    pass

@@ -22,7 +22,8 @@ import datetime
 import easyquotation
 import tushare as ts
 import pandas as pd
-
+from Config.Config import Config
+config = Config('ts').getInfo()
 
 """
 获取Tushare的pro权限账户
@@ -32,7 +33,7 @@ import pandas as pd
     pro
 """
 def get_pro():
-    return ts.pro_api('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
+    return ts.pro_api(config['api'])
 
 
 """
@@ -49,7 +50,6 @@ pro = get_pro()
 
 def get_news(src='sina', start_date='2018-11-21 09:00:00', end_date='2018-11-22 10:10:00'):
     return pro.news()
-
 
 def realTimePrice(code):
     """
@@ -71,6 +71,7 @@ def realTimePrice(code):
         }
     """
     return qo.stocks(code)
+
 
 
 def get_tick_price(code='sh', ktype='5'):
@@ -104,39 +105,17 @@ def get_tick_price(code='sh', ktype='5'):
         date_prices[s].reverse()
     return sorted(date_prices.items(), key=lambda date_prices:date_prices[0],reverse=False)
 
-
 def fund_basic(market='E'):
     pro.fund_basic(market='E')
 
-def get_stock_basics():
-    """
-    :function
-        获取大盘所有股票的基础信息
-    :returns
-        Dataframe结构，索引为股票代码，列名如下：
-            Index(['name', 'industry', 'area', 'pe', 'outstanding', 'totals',
-               'totalAssets', 'liquidAssets', 'fixedAssets', 'reserved',
-               'reservedPerShare', 'esp', 'bvps', 'pb', 'timeToMarket', 'undp',
-               'perundp', 'rev', 'profit', 'gpr', 'npr', 'holders'],
-              dtype='object')
-           name,名称
-           industry,细分行业
-           area,地区
-           pe,市盈率
-           outstanding,流通股本
-           totals,总股本(万)
-           totalAssets,总资产(万)
-           liquidAssets,流动资产
-           fixedAssets,固定资产
-           reserved,公积金
-           reservedPerShare,每股公积金
-           esp,每股收益
-           bvps,每股净资
-           pb,市净率
-           timeToMarket,上市日期
-    """
-    return ts.get_stock_basics()
+def get_concept():
+    return pro.concept()
 
+def get_pro_monthly(ts_code, start_date='2021-01-04', end_date= str(datetime.date.today().isoformat()).replace('-','')):
+    return  pro.monthly(ts_code='000001.SZ', start_date='20180101', end_date='20181101', fields='ts_code,trade_date,open,high,low,close,vol,amount')
+
+def get_stock_concepts(code):
+    return pro.concept_detail(ts_code = code)
 
 def get_fina_indicator(ts_code):
     """
@@ -149,42 +128,24 @@ def get_fina_indicator(ts_code):
     """
     return pro.fina_indicator(ts_code = ts_code)
 
-def get_index():
-    return ts.get_index()
+def get_index(code, sdate, edate):
+    return pro.index_daily(ts_code=code,start_date=sdate,end_date=edate)
+
+def get_index_basic():
+    return pro.index_basic()
 
 def get_pro_stock_basic(fields='ts_code,symbol,name,area,industry,list_date'):
     return pro.stock_basic(exchange='', list_status='L', fields=fields)
 
-def get_pro_daily(ts_code, start_date='2010-01-04', end_date= str(datetime.date.today().isoformat())):
+def get_pro_daily(ts_code, start_date='2021-01-04', end_date= str(datetime.date.today().isoformat()).replace('-','')):
     if type(ts_code) == str:
         return pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
     elif type(ts_code) == list:
         return pro.daily(ts_code=",".join(ts_code), start_date=start_date, end_date=end_date)
     else:
-        print("输入的股票代码有错误")
+        return pro.daily()
 
-def get_hist_data(code = '600355', start = "2000-01-01", end = "2020-07-15" ):
-    """
-    ------
-      code:string
-                  股票代码 e.g. 600848
-      start:string
-                  开始日期 format：YYYY-MM-DD 为空时取到API所提供的最早日期数据
-      end:string
-                  结束日期 format：YYYY-MM-DD 为空时取到最近一个交易日数据
-      ktype：string
-                  数据类型，D=日k线 W=周 M=月 5=5分钟 15=15分钟 30=30分钟 60=60分钟，默认为D
-      retry_count : int, 默认 3
-                 如遇网络等问题重复执行的次数
-      pause : int, 默认 0
-                重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
-    return
-    -------
-      DataFrame
-          属性:日期 ，开盘价， 最高价， 收盘价， 最低价， 成交量， 价格变动 ，涨跌幅，5日均价，10日均价，20日均价，5日均量，10日均量，20日均量，换手率
-    """
-    df = ts.get_hist_data(code, start, end, ktype='D')
-    return df
+
 
 if __name__ == '__main__':
     # get_tick_price('sh')

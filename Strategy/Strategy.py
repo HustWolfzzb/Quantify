@@ -9,7 +9,7 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from datetime import datetime, timedelta
-from DataEngine.Data import get_stock_basics, get_hist_data
+from DataEngine.Data import get_pro_stock_basic
 from DataEngine.Neo4j import get_Graph
 from DataEngine.Mysql import get_all_columns_with_label
 
