@@ -410,7 +410,7 @@ def update_stock_basics(graph):
                 "timeToMarket":"上市日期"
              }
     paras = list(paras2cn.keys())
-    dataframe = get_stock_basics()
+    dataframe = get_pro_stock_basic()
     print(dataframe.columns)
     split_industry = set()
     area = set()
@@ -456,8 +456,8 @@ def get_Graph():
     :return: 图
     """
     from Config.Config import Config
-    config = Config('ts').getInfo()
-    return Graph('bolt://localhost:7687',auth=(config.name, config.password))
+    config = Config('neo4j').getInfo()
+    return Graph(config['url2'],auth=(config['name'], config['password']))
 
 if __name__ == '__main__':
     graph = get_Graph()
@@ -477,8 +477,8 @@ if __name__ == '__main__':
     #                                      "pb": "`市净率`",
     #                                      "timeToMarket": "`上市日期`"
     #                                      })
-    # InitializationGraph()
-    # update_index_daily(graph)
+    InitializationGraph()
+    update_index_daily(graph)
     update_neo4j_stock_daily_info(graph)
     # update_neo4j_stock_realTime(graph)
     data = graph.run("match(n:`股票`)-[:belong_to]->(p:`行业`) return p,n").data()
@@ -493,7 +493,7 @@ if __name__ == '__main__':
                     key = d['p']['name']
                     print(d['p']['name'])
             else:
-                if d['n']['name'].find('ST')!=-1:
+                if d['n']['name'].find('ST')==-1:
                     print('\t' + d['n']['name'] +'\t' + d['n']['stock_id'] +'\t' + d['n']['涨跌幅'])
 
 

@@ -1,11 +1,11 @@
 import json
 
 class Config():
-    def __init__(self, type, info='../Config/info.json'):
+    def __init__(self, type, info='/Users/zhangzhaobo/PycharmProjects/Quantify/Config/info.json'):
         self.data = {}
         self.type = type
         with open(info,'r', encoding='utf8') as f:
-            data = json.load(f)
+            self.data = json.load(f)
 
     def getInfo(self):
         if self.type.find('百度')!=-1 or self.type.find('baidu')!=-1:

@@ -18,7 +18,7 @@ import datetime
 from DataEngine.Data import  get_pro_daily, get_pro_stock_basic
 import pymysql
 from Config.Config import Config
-config = Config('ts').getInfo()
+config = Config('mysql').getInfo()
 
 
 keys = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
