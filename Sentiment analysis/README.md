@@ -1,30 +1,21 @@
 # Quantify
-股票量化，包含股票知识图谱以及历史数据以及自动化交易
+情绪指标
 
-## 股票关系可视化
+## 数据来源
 
-通过Neo4j来构建股票市场的知识图谱
+###### 文本数据
+新闻快讯来自Tushare的pro.news API,来源比较丰富，而且内容很多的说，
 
-`    paras2cn = {"code":"代码",
-                "name":"名称",
-                "industry":"细分行业",
-                "area":"地区",
-                "pe":"市盈率",
-                "outstanding":"流通股本",
-                "totals":"总股本(万)",
-                "totalAssets":"总资产(万)",
-                "liquidAssets":"流动资产",
-                "fixedAssets":"固定资产",
-                "reserved":"公积金",
-                "reservedPerShare":"每股公积金",
-                "esp":"每股收益",
-                "bvps":"每股净资",
-                "pb":"市净率",
-                "timeToMarket":"上市日期"
-             }`
+###### 词性数据
+金融市场的词性表,来自[李峰教授 Bian et al. (2019) ](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3446388)
+训练的中文财经类的[Sentiment词典列表(https://github.com/seanxlwang/Bianetal2019CFSD)。
+该列表附在他们文章的最后是pdf形式。这里把它整理成EXCEL形式，方便使用。
 
-## 股票历史数据存储
+The sentiment variable equals to 1 if word is positive, and -1 if negative
 
-通过Mysql结构化存储每日交易信息
->keys = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
+## 情绪分析方案
+
+###### 目前是个简单的词性叠加，正面词多就好，否则坏。
+
+###### 后续准备引入神经网络的情绪分析，做一个更好的二分类器。
 

@@ -149,7 +149,8 @@ def get_pro_daily(ts_code, start_date='2021-01-04', end_date= str(datetime.date.
 
 if __name__ == '__main__':
     # get_tick_price('sh')
-
     symbol = ["002164", "002517", "002457", "600723", "600918", "600720", "603187", "002271", "000759", "000735", "601933"]
     stock_name = ["宁波东力", "恺英网络", "青龙管业", "首商股份", "中泰证券", "祁连山", "海容冷链", "东方雨虹", "中百集团", "罗牛山", "永辉超市"]
     print("数据驱动引擎，获取数据的总接口")
+    data = get_news()
+    print(data['datetime','title'])
