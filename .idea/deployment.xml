@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always">
+  <component name="PublishConfigData" autoUpload="Always" serverName="zzb@222.20.94.69:50010" showAutoUploadSettingsWarning="false">
     <serverData>
       <paths name="aliyun">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/Quantify" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="node2">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/Quantify" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="zzb@222.20.94.69:50010">
         <serverdata>
           <mappings>
             <mapping deploy="/Quantify" local="$PROJECT_DIR$" web="/" />

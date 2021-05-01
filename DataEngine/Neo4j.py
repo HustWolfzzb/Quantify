@@ -317,13 +317,20 @@ def update_neo4j_stock_realTime(graph):
         #     print(df)
         # break
 
-
 def update_stock_propertity_value(graph, label, propertity, values, condition):
     if len(propertity) != len(values):
         print("属性名和属性值数量不匹配！")
         return
-    for val in range(len(values)):
-        graph.run("match(n:`%s`) %s set n.%s = '%s' "%(label, condition, propertity[val], values[val]))
+    if len(values) < 2:
+        for val in range(len(values)):
+            graph.run("match(n:`%s`) %s set n.%s = '%s' "%(label, condition, propertity[val], values[val]))
+    else:
+        SQL = "match (n:`%s`) %s set n+= {" % (label, condition)
+        for col in range(len(propertity[0:-1])):
+            SQL += ('`' + propertity[col] + "`:'" + str(values[col]) + "',")
+        SQL += ('`' +propertity[-1] + "`:'" + str(values[-1]) + "'} ")
+        graph.run(SQL)
+
 
 def update_neo4j_stock_finance_info(graph):
     """
@@ -333,7 +340,7 @@ def update_neo4j_stock_finance_info(graph):
     """
     # para_en = ['open', 'high', 'close', 'low', 'volume', 'price_change', 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20']
     # paras_cn = ["开盘价", "最高价", "收盘价","最低价","成交量","价格变动","涨跌幅","五日均价","十日均价","二十日均价","五日均量","十日均量","二十日均量"]
-    code_in_Neo4j = [x['n.stock_id'] for x in graph.run("match (n:`股票`) return n.stock_id").data()]
+    code_in_Neo4j = [x['n.stock_id'][:6] for x in graph.run("match (n:`股票`) return n.stock_id").data()]
     count = 0
     basic = get_pro_stock_basic()
     codes = list(basic['symbol'])
@@ -345,12 +352,12 @@ def update_neo4j_stock_finance_info(graph):
         count+=1
         if index not in code_in_Neo4j:
             print("图中无此节点：%s" % index)
-            InitializationGraph()
+            InitializationGraph(code_ts[index])
         if count % int(length/50) == 0:
             print("%s / %s"%(count, length))
         try:
+            time.sleep(0.3)
             df = get_fina_indicator(ts_code=code_ts[index])
-            time.sleep(0.15)
             if df.empty:
                 print("没有获取到数据")
                 continue
@@ -360,8 +367,12 @@ def update_neo4j_stock_finance_info(graph):
         except AttributeError as ae:
             print("Code:%s, AttributeError!"%index)
             continue
+        except Exception as e:
+            print(e)
+            time.sleep(60)
+            df = get_fina_indicator(ts_code=code_ts[index])
         try:
-            update_stock_propertity_value(graph, ",".join(ROE.values()), )
+            update_stock_propertity_value(graph, '股票', list(ROE.values()), list(df.loc[0, list(ROE.keys())]), 'where n.stock_id="%s"'%code_ts[index])
         except IndexError as e:
             print("索引 %s 出错"%index)
             print(df)
@@ -394,7 +405,7 @@ def update_stock_basics(graph):
     """
     paras2cn = {"code":"代码",
                 "name":"名称",
-                "industry":"细分行业",
+                "industry":"行业",
                 "area":"地区",
                 "pe":"市盈率",
                 "outstanding":"流通股本",
@@ -424,11 +435,11 @@ def update_stock_basics(graph):
     for si in split_industry:
         if si not in si_in_Neo4j:
             count += 1
-            graph.create(Node('细分行业', splitIndustry_id = str(count), name = si))
+            graph.create(Node('行业', splitIndustry_id = str(count), name = si))
             for index in dataframe.index:
                 if dataframe.at[index, "industry"] == si:
                     node = getNode(graph, '股票', 'stock_id', index, createNode=True)[0]
-                    si_1 = graph.nodes.match('细分行业', name=dataframe.at[index, "industry"]).first()
+                    si_1 = graph.nodes.match('行业', name=dataframe.at[index, "industry"]).first()
                     s2s = Relationship(node, 'belong_to', si_1)
                     graph.create(s2s)
     get_area = graph.run("match (n:`地区`) return n.name").data()
@@ -477,23 +488,24 @@ if __name__ == '__main__':
     #                                      "pb": "`市净率`",
     #                                      "timeToMarket": "`上市日期`"
     #                                      })
-    InitializationGraph()
-    update_index_daily(graph)
-    update_neo4j_stock_daily_info(graph)
+    # InitializationGraph()
+    # update_index_daily(graph)
+    # update_neo4j_stock_daily_info(graph)
+    update_neo4j_stock_finance_info(graph)
     # update_neo4j_stock_realTime(graph)
-    data = graph.run("match(n:`股票`)-[:belong_to]->(p:`行业`) return p,n").data()
+    # data = graph.run("match(n:`股票`)-[:belong_to]->(p:`行业`) return p,n").data()
     # data = graph.run("match(n:`股票`)-[:belong_to]->(p:`行业`) where n.`涨跌幅` > '0.03' return p,n").data()
-    key = ''
-    for d in data:
-        for x in d.keys():
-            if x=='p':
-                if key == d['p']['name']:
-                    continue
-                else:
-                    key = d['p']['name']
-                    print(d['p']['name'])
-            else:
-                if d['n']['name'].find('ST')==-1:
-                    print('\t' + d['n']['name'] +'\t' + d['n']['stock_id'] +'\t' + d['n']['涨跌幅'])
+    # key = ''
+    # for d in data:
+    #     for x in d.keys():
+    #         if x=='p':
+    #             if key == d['p']['name']:
+    #                 continue
+    #             else:
+    #                 key = d['p']['name']
+    #                 print(d['p']['name'])
+    #         else:
+    #             if d['n']['name'].find('ST')==-1:
+    #                 print('\t' + d['n']['name'] +'\t' + d['n']['stock_id'] +'\t' + d['n']['涨跌幅'])
 
 

@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="ce7fe091-6219-4dfd-9ddb-d9a5ff57c412" name="aliyun" url="http://servername">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="39.99.253.203" port="22" sshConfigId="98a518fd-95b8-4975-9629-2b6e7b301cdf" sshConfig="root@39.99.253.203:22 agent" authAgent="true">
+        <fileTransfer rootFolder="/root" accessType="SFTP" host="222.20.94.69" port="22" sshConfigId="98a518fd-95b8-4975-9629-2b6e7b301cdf" sshConfig="zzb@222.20.94.69:22 agent" authAgent="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

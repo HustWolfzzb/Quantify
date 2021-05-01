@@ -22,6 +22,8 @@ import datetime
 import easyquotation
 import tushare as ts
 import pandas as pd
+import sys
+sys.path.append('../../Quantify')
 from Config.Config import Config
 config = Config('ts').getInfo()
 
@@ -44,12 +46,12 @@ def get_pro():
 
 def get_qo():
     return easyquotation.use('sina')
+
 qo = get_qo()
 pro = get_pro()
 
-
-def get_news(src='sina', start_date='2018-11-21 09:00:00', end_date='2018-11-22 10:10:00'):
-    return pro.news()
+def get_news():
+    return pro.news
 
 def realTimePrice(code):
     """
@@ -133,6 +135,17 @@ def get_index(code, sdate, edate):
 
 def get_index_basic():
     return pro.index_basic()
+
+
+def get_stock_list_date(to_lower=True):
+    def lower(c):
+        return c.lower()
+    stock_basic = get_pro_stock_basic(fields='ts_code,list_date')
+    list_date = list(stock_basic['list_date'])
+    if to_lower:
+        codes = list(stock_basic['ts_code'].apply(lower))
+    code_listdate = {codes[x]: list_date[x] for x in range(len(codes))}
+    return code_listdate
 
 def get_pro_stock_basic(fields='ts_code,symbol,name,area,industry,list_date'):
     return pro.stock_basic(exchange='', list_status='L', fields=fields)

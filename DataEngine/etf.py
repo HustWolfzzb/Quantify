@@ -65,7 +65,7 @@ if __name__ == '__main__':
                                   columns=['代码', '名称', '钱', '股份', '入价', '出价', '入金', '出金', '股价波动', '利润率'])
         for et in range(len(etf)):
             try:
-                if float(etf.loc[et, '市价']) < 2.5 and float(etf.loc[et, '市价']) > 0.5:# and str(etf.loc[et,'名称']).find('南方中证全指证券公司')!=-1 :
+                if float(etf.loc[et, '市价']) < 4.5 and float(etf.loc[et, '市价']) > 0.5:# and str(etf.loc[et,'名称']).find('南方中证全指证券公司')!=-1 :
                     code = str(etf.loc[et, '代码'])
                     if code[0] == '5':
                         code += '.SH'

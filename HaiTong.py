@@ -6,7 +6,7 @@ from DataEngine.Data import get_qo
 
 user = easytrader.use('htzq_client')
 user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
-# user.prepare(user='张照博', password='379926', comm_password='379926')
+# user.prepare(user='张照博', password='xxx', comm_password='xxx')
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
 qo = get_qo()
