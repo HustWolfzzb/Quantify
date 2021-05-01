@@ -6,6 +6,7 @@ def avg(x):
         amount += s
     return amount/len(x)
 
+
 def MovingAverage(code='600900.SH',sdate='20120101',edate='20210323'):
     data = get_pro_daily(code,sdate,edate)
     data = data[::-1].reset_index()
