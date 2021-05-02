@@ -7,6 +7,8 @@ def getFileAbsolutePath(nowDir):
         return "/home/zzb/Quantify/Config/info.json"
     elif sys.platform == 'darwin':
         return "/Users/zhangzhaobo/PycharmProjects/Quantify/Config/info.json"
+    else:
+        return os.path.join(os.getcwd(), 'Config\info.json')
 
 class Config():
     def __init__(self, type):

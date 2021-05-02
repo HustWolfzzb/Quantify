@@ -2,11 +2,12 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="ce7fe091-6219-4dfd-9ddb-d9a5ff57c412" name="aliyun" url="http://servername">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="222.20.94.69" port="22" sshConfigId="98a518fd-95b8-4975-9629-2b6e7b301cdf" sshConfig="zzb@222.20.94.69:22 agent" authAgent="true">
+      <webServer id="ce7fe091-6219-4dfd-9ddb-d9a5ff57c412" name="node10" url="http://servername">
+        <fileTransfer host="222.20.94.69" port="50010" rootFolder="/home/zzb" accessType="SFTP">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
+          <option name="port" value="50010" />
         </fileTransfer>
       </webServer>
     </option>

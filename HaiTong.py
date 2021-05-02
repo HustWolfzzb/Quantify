@@ -5,7 +5,8 @@ import datetime
 from DataEngine.Data import get_qo
 
 user = easytrader.use('htzq_client')
-user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+#user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.prepare(user='张照博', password='xxx', comm_password='xxx')
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
@@ -288,8 +289,10 @@ def spy_price():
 
 if __name__ == '__main__':
     # spy_price()
+    print(user.position)
+    user.refresh()
     # print(len(user.today_trades))
-    open_grid_buy()
+    #open_grid_buy()
     # print(user.today_trades)
     # [{'成交时间': '', '证券代码': '', '证券名称': '', '操作': '', '成交数量': 0, '成交均价': 0.0, '成交金额': 0.0, '合同编号': '0', '成交编号': '',
     #   'Unnamed: 9': ''}]
