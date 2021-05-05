@@ -69,8 +69,8 @@ class User():
         return self.user.today_entrusts
 
     def show(self):
-        print("资金余额：%s\n\t可用资金：%s\n\t可取金额：%s\n\t总资产：%s\n\t"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan))
-        print("当前持仓股票:\n\t", self.stock.get_position())
+        print("资金余额：%s\n-->\t可用资金：%s\n-->\t可取金额：%s\n-->\t总资产：%s\n-->\t"%(self.zi_jin_yu_e, self.ke_yong_jin_e, self.ke_qu_jin_e, self.zong_zi_chan))
+        print("当前持仓股票:\n-->\t", self.stock.get_position())
 
 class Stock():
     def __init__(self, position):
@@ -103,34 +103,31 @@ class Trade():
             if self.type in ['buy','b']:
                 try:
                     buy_record = user.buy(self.code, self.price, self.amount)
-                    print(buy_record)
-                    self.id = buy_record['entrust_no']
+                    self.id = buy_record['message']
                     return self.id
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
-                    print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+                    print("错误日志:\n-->\t代码：%s\n-->\t价格:%s\n-->\t委托数量：%s\n-->\t买卖类型：%s\n-->\t" % (self.code, self.price, self.amount, self.type))
                 except Exception as e:
                     if str(e).find('不足'):
                         print(str(e), names[self.code])
-                        print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+                        print("错误日志:\n-->\t代码：%s\n-->\t价格:%s\n-->\t委托数量：%s\n-->\t买卖类型：%s\n-->\t" % (self.code, self.price, self.amount, self.type))
             elif self.type in ['sell','s']:
                 try:
                     sell_record = user.sell(self.code, self.price, self.amount)
+                    self.id = sell_record['message']
 
-                    self.id = sell_record['entrust_no']
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
-                    print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
-
+                    print("错误日志:\n-->\t代码：%s\n-->\t价格:%s\n-->\t委托数量：%s\n-->\t买卖类型：%s\n-->\t" % (self.code, self.price, self.amount, self.type))
                 except Exception as e:
                     if str(e).find('不足'):
                         print(str(e), names[self.code])
-                        print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
+                        print("错误日志:\n-->\t代码：%s\n-->\t价格:%s\n-->\t委托数量：%s\n-->\t买卖类型：%s\n-->\t" % (self.code, self.price, self.amount, self.type))
         else:
-            print("数据不符合规范:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t"%(self.code,self.price,self.amount,self.type))
+            print("数据不符合规范:\n-->\t代码：%s\n-->\t价格:%s\n-->\t委托数量：%s\n-->\t买卖类型：%s\n-->\t"%(self.code,self.price,self.amount,self.type))
+        return self.id
 
-    def cancel(self):
-        user.cancel_entrust(self.id)
 
 def get_Account():
     return User(user)
