@@ -290,7 +290,7 @@ def spy_price():
 if __name__ == '__main__':
     # spy_price()
     print(user.position)
-    user.refresh()
+    user.buy('512710', 20.0, 100)
     # print(len(user.today_trades))
     #open_grid_buy()
     # print(user.today_trades)
