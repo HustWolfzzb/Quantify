@@ -5,8 +5,9 @@ import datetime
 from DataEngine.Data import get_qo
 
 # user = easytrader.use('htzq_client')
-user = easytrader.use('universal_client')
-user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+user = easytrader.use('ths')
+user.connect(r'E:\Program Files\东方同花顺\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+# user.connect(r'E:\Program Files\EastTonghuashun\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 #user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 
@@ -94,10 +95,15 @@ class Trade():
         self.id = ''
 
     def trade(self, code, price, amount, type):
+        self.code = code
+        self.price = price
+        self.amount = amount
+        self.type = type
         if self.code !='' and self.price > 0 and self.amount and self.type in ['buy', 'sell', 'b', 's']:
             if self.type in ['buy','b']:
                 try:
                     buy_record = user.buy(self.code, self.price, self.amount)
+                    print(buy_record)
                     self.id = buy_record['entrust_no']
                     return self.id
                 except KeyError as e:
@@ -110,6 +116,7 @@ class Trade():
             elif self.type in ['sell','s']:
                 try:
                     sell_record = user.sell(self.code, self.price, self.amount)
+
                     self.id = sell_record['entrust_no']
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
