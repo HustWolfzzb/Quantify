@@ -4,12 +4,17 @@ import tushare as ts
 import datetime
 from DataEngine.Data import get_qo
 
-user = easytrader.use('htzq_client')
+# user = easytrader.use('htzq_client')
+user = easytrader.use('universal_client')
 user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+# user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 #user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+
+
 # user.prepare(user='张照博', password='xxx', comm_password='xxx')
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
+
 qo = get_qo()
 # codes = ['515880']
 # names = ['通信etf']
@@ -87,7 +92,6 @@ class Trade():
         else:
             print("委托类型不明",type)
         self.id = ''
-        self.trade(self.code, self.price, self.amount, self.type)
 
     def trade(self, code, price, amount, type):
         if self.code !='' and self.price > 0 and self.amount and self.type in ['buy', 'sell', 'b', 's']:
@@ -95,6 +99,7 @@ class Trade():
                 try:
                     buy_record = user.buy(self.code, self.price, self.amount)
                     self.id = buy_record['entrust_no']
+                    return self.id
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
                     print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
@@ -102,7 +107,6 @@ class Trade():
                     if str(e).find('不足'):
                         print(str(e), names[self.code])
                         print("错误日志:\n\t代码：%s\n\t价格:%s\n\t委托数量：%s\n\t买卖类型：%s\n\t" % (self.code, self.price, self.amount, self.type))
-
             elif self.type in ['sell','s']:
                 try:
                     sell_record = user.sell(self.code, self.price, self.amount)
@@ -286,11 +290,47 @@ def spy_price():
                 if str(e).find('客户股票不足'):
                     print('客户%s股票不足'%names[code_idx])
 
+def spy_on_513550():
+    # start = False
+
+    code = '513550'
+    buy_amount = 100
+    sell_amount = 100
+    p = get_all_price(code)
+    close_price = p[code]['close']
+    gap = round(close_price * 0.002, 3)
+    if gap < 0.001:
+        gap = 0.001
+    operate = 'Buy'
+    operate_price = close_price
+    buyer = Trade(code,operate_price, 100, 'b')
+    seller = Trade(code,operate_price, 100, 's')
+    while True:
+        time.sleep(0.5)
+        p = get_all_price(code)
+        price_now = p[code]['now']
+        try:
+            if price_now < operate_price * (1 - gap) and price_now < close_price:
+                buy_price = round(operate_price * (1 - gap),3)
+                buy_amount = buy_amount
+                buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
+                operate_price = buy_price
+            if price_now > operate_price * (1 + gap) and price_now > close_price:
+                sell_price = round(operate_price * (1 - gap), 3)
+                sell_amount = sell_amount
+                sell_id = seller.trade(code, sell_price, sell_amount, 's')
+                operate_price = sell_price
+        except KeyError as e:
+            print(e)
+        except Exception as e:
+            if str(e).find('客户股票不足'):
+                print('客户%s股票不足'%code)
+
 
 if __name__ == '__main__':
     # spy_price()
     print(user.position)
-    user.buy('512710', 20.0, 100)
+    spy_on_513550()
     # print(len(user.today_trades))
     #open_grid_buy()
     # print(user.today_trades)

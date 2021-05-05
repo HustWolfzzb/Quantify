@@ -60,3 +60,4 @@ if __name__ == '__main__':
     for i in ['600900.SH','000157.SZ','000725.SZ','002064.SZ','600048.SH']:
         print(i)
         MovingAverage(i)
+
