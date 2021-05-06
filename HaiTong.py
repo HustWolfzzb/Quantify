@@ -296,12 +296,13 @@ def spy_price():
 
 def spy_on_513550():
     # start = False
-
+    count = 0
     code = '513550'
     buy_amount = 100
     sell_amount = 100
     p = get_all_price(code)
     close_price = p[code]['close']
+    close_price = 1.014
     gap = round(close_price * 0.002, 3)
     if gap < 0.001:
         gap = 0.001
@@ -312,15 +313,20 @@ def spy_on_513550():
     while True:
         time.sleep(0.5)
         p = get_all_price(code)
+        count += 1
         price_now = p[code]['now']
+        #if count % 10 == 0:
+         #   print('\r 港股通50当前价格：%s'%price_now)
+        if count % 3600 == 0:
+            print(user.position)
         try:
-            if price_now < operate_price * (1 - gap) and price_now < close_price:
+            if price_now < operate_price * (1 - gap):
                 buy_price = round(operate_price * (1 - gap),3)
                 buy_amount = buy_amount
                 buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
                 operate_price = buy_price
-            if price_now > operate_price * (1 + gap) and price_now > close_price:
-                sell_price = round(operate_price * (1 - gap), 3)
+            if price_now > operate_price * (1 + gap) :
+                sell_price = round(operate_price * (1 + gap), 3)
                 sell_amount = sell_amount
                 sell_id = seller.trade(code, sell_price, sell_amount, 's')
                 operate_price = sell_price
