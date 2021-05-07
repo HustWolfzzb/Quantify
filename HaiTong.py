@@ -304,6 +304,7 @@ def spy_on_etf():
     close_price = [p[code]['close'] for code in codes]
     # close_price = 1.014
     gaps = [ round(close_price[0] * 0.002, 3),  round(close_price[0] * 0.004, 3)]
+    gaps[0] = 1.022
     for g in [0,1]:
         if gaps[g] < 0.002:
             gaps[g] = 0.002
@@ -315,15 +316,17 @@ def spy_on_etf():
         time.sleep(0.5)
         p = get_all_price(codes)
         count += 1
-        price_now = [p[code]['now'] for code in codes]
-        #if count % 10 == 0:
-         #   print('\r 港股通50当前价格：%s'%price_now)
+        price_nows = [p[code]['now'] for code in codes]
+
         if count % 3600 == 0:
             print(user.position)
         for i in range(2):
             try:
                 code = codes[i]
                 gap = gaps[i]
+                price_now = price_nows[i]
+               # if count % 10 == 0:
+                #    print(code, gap, price_now)
                 buyer = buyers[i]
                 seller = sellers[i]
                 operate_price = operate_prices[i]
@@ -331,12 +334,12 @@ def spy_on_etf():
                     buy_price = round(operate_price * (1 - gap),3)
                     buy_amount = buy_amount
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
-                    operate_price = buy_price
-                if price_now > operate_price * (1 + gap) :
+                    operate_prices[i] = buy_price
+                if price_now > operate_price * (1 + gap):
                     sell_price = round(operate_price * (1 + gap), 3)
                     sell_amount = sell_amount
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
-                    operate_price = sell_price
+                    operate_prices[i] = sell_price
             except KeyError as e:
                 print(e)
             except Exception as e:
