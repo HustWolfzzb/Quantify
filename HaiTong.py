@@ -306,13 +306,12 @@ def spy_on_etf():
     close_price = [p[code]['close'] for code in codes]
     # close_price = 1.014
     gaps = [ round(close_price[0] * 0.002, 3),  round(close_price[0] * 0.004, 3)]
-    gaps[0] = 1.022
-    gaps[1] = 3.458
     for g in [0,1]:
         if gaps[g] < 0.002:
             gaps[g] = 0.002
     operate = 'Buy'
     operate_prices = close_price
+    operate_prices=[1.022, 3.458]
     buyers = [Trade(codes[0], operate_prices[0], 100, 'b'), Trade(codes[1], operate_prices[1], 100, 'b')]
     sellers = [Trade(codes[0], operate_prices[0], 100, 's'), Trade(codes[1], operate_prices[1], 100, 's')]
     while True:
