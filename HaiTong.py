@@ -294,53 +294,60 @@ def spy_price():
                 if str(e).find('客户股票不足'):
                     print('客户%s股票不足'%names[code_idx])
 
-def spy_on_513550():
+def spy_on_etf():
     # start = False
     count = 0
-    code = '513550'
+    codes = ['513550','510050']
     buy_amount = 100
     sell_amount = 100
-    p = get_all_price(code)
-    close_price = p[code]['close']
-    close_price = 1.014
-    gap = round(close_price * 0.002, 3)
-    if gap < 0.001:
-        gap = 0.001
+    p = get_all_price(codes)
+    close_price = [p[code]['close'] for code in codes]
+    # close_price = 1.014
+    gaps = [ round(close_price[0] * 0.002, 3),  round(close_price[0] * 0.004, 3)]
+    for g in [0,1]:
+        if gaps[g] < 0.002:
+            gaps[g] = 0.002
     operate = 'Buy'
-    operate_price = close_price
-    buyer = Trade(code,operate_price, 100, 'b')
-    seller = Trade(code,operate_price, 100, 's')
+    operate_prices = close_price
+    buyers = [Trade(codes[0], operate_prices[0], 100, 'b'), Trade(codes[1], operate_prices[1], 100, 'b')]
+    sellers = [Trade(codes[0], operate_prices[0], 100, 's'), Trade(codes[1], operate_prices[1], 100, 's')]
     while True:
         time.sleep(0.5)
-        p = get_all_price(code)
+        p = get_all_price(codes)
         count += 1
-        price_now = p[code]['now']
+        price_now = [p[code]['now'] for code in codes]
         #if count % 10 == 0:
          #   print('\r 港股通50当前价格：%s'%price_now)
         if count % 3600 == 0:
             print(user.position)
-        try:
-            if price_now < operate_price * (1 - gap):
-                buy_price = round(operate_price * (1 - gap),3)
-                buy_amount = buy_amount
-                buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
-                operate_price = buy_price
-            if price_now > operate_price * (1 + gap) :
-                sell_price = round(operate_price * (1 + gap), 3)
-                sell_amount = sell_amount
-                sell_id = seller.trade(code, sell_price, sell_amount, 's')
-                operate_price = sell_price
-        except KeyError as e:
-            print(e)
-        except Exception as e:
-            if str(e).find('客户股票不足'):
-                print('客户%s股票不足'%code)
+        for i in range(2):
+            try:
+                code = codes[i]
+                gap = gaps[i]
+                buyer = buyers[i]
+                seller = sellers[i]
+                operate_price = operate_prices[i]
+                if price_now < operate_price * (1 - gap):
+                    buy_price = round(operate_price * (1 - gap),3)
+                    buy_amount = buy_amount
+                    buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
+                    operate_price = buy_price
+                if price_now > operate_price * (1 + gap) :
+                    sell_price = round(operate_price * (1 + gap), 3)
+                    sell_amount = sell_amount
+                    sell_id = seller.trade(code, sell_price, sell_amount, 's')
+                    operate_price = sell_price
+            except KeyError as e:
+                print(e)
+            except Exception as e:
+                if str(e).find('客户股票不足'):
+                    print('客户%s股票不足'%codes[i])
 
 
 if __name__ == '__main__':
     # spy_price()
     print(user.position)
-    spy_on_513550()
+    spy_on_etf()
     # print(len(user.today_trades))
     #open_grid_buy()
     # print(user.today_trades)
