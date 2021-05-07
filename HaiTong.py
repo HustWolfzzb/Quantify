@@ -104,6 +104,7 @@ class Trade():
                 try:
                     buy_record = user.buy(self.code, self.price, self.amount)
                     self.id = buy_record['message']
+                    print("%s Success， Code:%s, Price：%s, Amount:%s"%(self.type, self.code, self.price, self.amount))
                     return self.id
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
@@ -115,6 +116,7 @@ class Trade():
             elif self.type in ['sell','s']:
                 try:
                     sell_record = user.sell(self.code, self.price, self.amount)
+                    print("%s Success， Code:%s, Price：%s, Amount:%s"%(self.type, self.code, self.price, self.amount))
                     self.id = sell_record['message']
 
                 except KeyError as e:
@@ -305,6 +307,7 @@ def spy_on_etf():
     # close_price = 1.014
     gaps = [ round(close_price[0] * 0.002, 3),  round(close_price[0] * 0.004, 3)]
     gaps[0] = 1.022
+    gaps[1] = 3.458
     for g in [0,1]:
         if gaps[g] < 0.002:
             gaps[g] = 0.002
