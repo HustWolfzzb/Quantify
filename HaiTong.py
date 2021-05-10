@@ -11,7 +11,9 @@ elif sys.platform == 'darwin':
     user = ''
 else:
     user = easytrader.use('ths')
-    user.connect(r'E:\Program Files\东方同花顺\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+    user.connect(r'E:\Program Files\东方同花顺\xiadan.exe')
+
+# 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.connect(r'E:\Program Files\EastTonghuashun\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 #user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
@@ -103,12 +105,18 @@ class Trade():
         self.price = price
         self.amount = amount
         self.type = type
+        type2Namee  = {
+            'b':"购入股票",
+            's':"卖出股票",
+            'buy':"购入股票",
+            'sell':"卖出股票"
+        }
         if self.code !='' and self.price > 0 and self.amount and self.type in ['buy', 'sell', 'b', 's']:
             if self.type in ['buy','b']:
                 try:
                     buy_record = user.buy(self.code, self.price, self.amount)
                     self.id = buy_record['message']
-                    print("%s Success， Code:%s, Price：%s, Amount:%s"%(self.type, self.code, self.price, self.amount))
+                    print("%s Success， Code:%s, Price：%s, Amount:%s"%(type2Namee[self.type], self.code, self.price, self.amount))
                     return self.id
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
@@ -120,7 +128,7 @@ class Trade():
             elif self.type in ['sell','s']:
                 try:
                     sell_record = user.sell(self.code, self.price, self.amount)
-                    print("%s Success， Code:%s, Price：%s, Amount:%s"%(self.type, self.code, self.price, self.amount))
+                    print("%s Success， Code:%s, Price：%s, Amount:%s"%(type2Namee[self.type], self.code, self.price, self.amount))
                     self.id = sell_record['message']
 
                 except KeyError as e:
@@ -147,25 +155,28 @@ def load_para_once(code):
     with open('cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
         return json.load(f)
 
+def save_gaps_once(gaps):
+    string = json.dumps(gaps)
+    with open('cachegaps.txt', 'w', encoding='utf8') as log:
+        log.write(string)
+
+def load_gaps():
+    with open('cache/gaps.txt', 'r', encoding='utf8') as f:
+        return json.load(f)
+
+
 def grid_bs():
     # start = False
     count = 0
-    codes = ['513550','510050']
+    codes = ['513550','510050','002044','000725']
     buy_amount = 100
     sell_amount = 100
-    p = get_all_price(codes)
-    close_price = [p[code]['close'] for code in codes]
-    # close_price = 1.014
-    gaps = [ round(close_price[0] * 0.002, 3),  round(close_price[0] * 0.004, 3)]
-    for g in [0,1]:
-        if gaps[g] < 0.002:
-            gaps[g] = 0.002
-    operate = 'Buy'
+    gaps = load_gaps()
     operate_prices=[]
     for c in codes:
         operate_prices.append(float(load_para_once(c)[c]['price']))
-    buyers = [Trade(codes[0], operate_prices[0], 100, 'b'), Trade(codes[1], operate_prices[1], 100, 'b')]
-    sellers = [Trade(codes[0], operate_prices[0], 100, 's'), Trade(codes[1], operate_prices[1], 100, 's')]
+    buyer = Trade(codes[0], operate_prices[0], 100, 'b')
+    seller = Trade(codes[0], operate_prices[0], 100, 's')
     while True:
         time.sleep(0.5)
         p = get_all_price(codes)
@@ -176,24 +187,24 @@ def grid_bs():
         for i in range(2):
             try:
                 code = codes[i]
-                gap = gaps[i]
+                gap = gaps[code]
                 price_now = price_nows[i]
                # if count % 10 == 0:
                 #    print(code, gap, price_now)
-                buyer = buyers[i]
-                seller = sellers[i]
                 operate_price = operate_prices[i]
                 if price_now < operate_price - gap:
-                    buy_price = round(operate_price * (1 - gap),3)
+                    buy_price = round(operate_price - gap,3)
                     buy_amount = buy_amount
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
+                    print("Price  Now:%s"%price_now)
                     save_para_once(code, buy_price, buy_amount)
                     operate_prices[i] = buy_price
                 if price_now > operate_price + gap:
-                    sell_price = round(operate_price * (1 + gap), 3)
+                    sell_price = round(operate_pri + gap, 3)
                     sell_amount = sell_amount
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_para_once(code, sell_price, sell_amount)
+                    print("Price  Now:%s"%price_now)
                     operate_prices[i] = sell_price
             except KeyError as e:
                 print(e)
@@ -203,5 +214,4 @@ def grid_bs():
 
 
 if __name__ == '__main__':
-    print(user.position)
     grid_bs()
