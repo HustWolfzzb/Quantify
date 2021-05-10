@@ -168,13 +168,15 @@ def load_gaps():
 def grid_bs():
     # start = False
     count = 0
-    codes = ['513550','510050','002044','000725']
+    codes = ['513550','002044','000725']
     buy_amount = 100
     sell_amount = 100
     gaps = load_gaps()
+    print(gaps)
     operate_prices=[]
     for c in codes:
         operate_prices.append(float(load_para_once(c)[c]['price']))
+    print(operate_prices)
     buyer = Trade(codes[0], operate_prices[0], 100, 'b')
     seller = Trade(codes[0], operate_prices[0], 100, 's')
     while True:
@@ -182,13 +184,13 @@ def grid_bs():
         p = get_all_price(codes)
         count += 1
         price_nows = [p[code]['now'] for code in codes]
-        if count % 3600 == 0:
-            print(user.position)
-        for i in range(2):
+        for i in range(len(codes)):
             try:
                 code = codes[i]
                 gap = gaps[code]
                 price_now = price_nows[i]
+                if count % 360 == 0:
+                    print("\r%s当前价格:%s" % (code, price_now))
                # if count % 10 == 0:
                 #    print(code, gap, price_now)
                 operate_price = operate_prices[i]
