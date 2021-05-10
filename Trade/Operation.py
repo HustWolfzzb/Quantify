@@ -5,7 +5,7 @@ from datetime import datetime, time, date
 from time import sleep
 import easyquotation
 # from Strategy import nihe
-from DataEngine.Data import get_pro_daily,get_pro_stock_basic
+from DataEngine.Data import get_pro_daily, get_pro_stock_basic
 
 
 # 程序运行时间在白天8:30 到 15:30  晚上20:30 到 凌晨 2:30

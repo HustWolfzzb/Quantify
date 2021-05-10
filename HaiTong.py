@@ -1,12 +1,17 @@
 import easytrader
 import time
-import tushare as ts
-import datetime
 from DataEngine.Data import get_qo
+import json
+import sys
 
 # user = easytrader.use('htzq_client')
-user = easytrader.use('ths')
-user.connect(r'E:\Program Files\东方同花顺\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+if sys.platform == 'linux':
+    user = ''
+elif sys.platform == 'darwin':
+    user = ''
+else:
+    user = easytrader.use('ths')
+    user.connect(r'E:\Program Files\东方同花顺\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.connect(r'E:\Program Files\EastTonghuashun\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 # user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 #user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
@@ -133,8 +138,16 @@ class Trade():
 def get_Account():
     return User(user)
 
+def save_para_once(code, price, amount):
+    string = json.dumps({code:{'price':price, 'amount':amount}})
+    with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
+        log.write(string)
 
-def spy_on_etf():
+def load_para_once(code):
+    with open('cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
+        return json.load(f)
+
+def grid_bs():
     # start = False
     count = 0
     codes = ['513550','510050']
@@ -148,8 +161,9 @@ def spy_on_etf():
         if gaps[g] < 0.002:
             gaps[g] = 0.002
     operate = 'Buy'
-    operate_prices = close_price
-    operate_prices=[1.022, 3.458]
+    operate_prices=[]
+    for c in codes:
+        operate_prices.append(float(load_para_once(c)[c]['price']))
     buyers = [Trade(codes[0], operate_prices[0], 100, 'b'), Trade(codes[1], operate_prices[1], 100, 'b')]
     sellers = [Trade(codes[0], operate_prices[0], 100, 's'), Trade(codes[1], operate_prices[1], 100, 's')]
     while True:
@@ -157,7 +171,6 @@ def spy_on_etf():
         p = get_all_price(codes)
         count += 1
         price_nows = [p[code]['now'] for code in codes]
-
         if count % 3600 == 0:
             print(user.position)
         for i in range(2):
@@ -174,11 +187,13 @@ def spy_on_etf():
                     buy_price = round(operate_price * (1 - gap),3)
                     buy_amount = buy_amount
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
+                    save_para_once(code, buy_price, buy_amount)
                     operate_prices[i] = buy_price
                 if price_now > operate_price + gap:
                     sell_price = round(operate_price * (1 + gap), 3)
                     sell_amount = sell_amount
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
+                    save_para_once(code, sell_price, sell_amount)
                     operate_prices[i] = sell_price
             except KeyError as e:
                 print(e)
@@ -188,11 +203,5 @@ def spy_on_etf():
 
 
 if __name__ == '__main__':
-    # spy_price()
     print(user.position)
-    spy_on_etf()
-    # print(len(user.today_trades))
-    #open_grid_buy()
-    # print(user.today_trades)
-    # [{'成交时间': '', '证券代码': '', '证券名称': '', '操作': '', '成交数量': 0, '成交均价': 0.0, '成交金额': 0.0, '合同编号': '0', '成交编号': '',
-    #   'Unnamed: 9': ''}]
+    grid_bs()
