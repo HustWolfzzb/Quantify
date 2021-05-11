@@ -1,16 +1,25 @@
 import json
 from DataEngine.Data import get_qo
-from Trade.Oprationn import Trade
-from HaiTong import save_para_once,load_para_once
+from Trade.Operation import Trader
 import time
+
+
+def save_para_once(code, price, amount):
+    string = json.dumps({code:{'price':price, 'amount':amount}})
+    with open('../cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
+        log.write(string)
+
+def load_para_once(code):
+    with open('../cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
+        return json.load(f)
 
 def save_gaps_once(gaps):
     string = json.dumps(gaps)
-    with open('cachegaps.txt', 'w', encoding='utf8') as log:
+    with open('../cache/gaps.txt', 'w', encoding='utf8') as log:
         log.write(string)
 
 def load_gaps():
-    with open('cache/gaps.txt', 'r', encoding='utf8') as f:
+    with open('../cache/gaps.txt', 'r', encoding='utf8') as f:
         return json.load(f)
 
 
@@ -18,11 +27,11 @@ qo = get_qo()
 # codes = ['515880']
 # names = ['通信etf']
 
-def get_all_price(codes = ['512900','515650','159801','515880']):
+def get_all_price(codes=['512900','515650','159801','515880']):
     return qo.stocks(codes)
 
 
-def grid_bs(codes, user, ):
+def grid_bs(codes, user ):
     # start = False
     count = 0
     buy_amount = 100
@@ -33,8 +42,8 @@ def grid_bs(codes, user, ):
     for c in codes:
         operate_prices.append(float(load_para_once(c)[c]['price']))
     print(operate_prices)
-    buyer = Trade(user, codes[0], operate_prices[0], 100, 'b')
-    seller = Trade(user, codes[0], operate_prices[0], 100, 's')
+    buyer = Trader(user, codes[0], operate_prices[0], 100, 'b')
+    seller = Trader(user, codes[0], operate_prices[0], 100, 's')
     while True:
         time.sleep(0.5)
         p = get_all_price(codes)

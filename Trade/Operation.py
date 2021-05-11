@@ -7,7 +7,7 @@ import easyquotation
 from DataEngine.Data import get_pro_daily, get_pro_stock_basic
 
 
-class Trade():
+class Trader():
     def __init__(self, user, code, price, amount, type):
         self.user = user
         self.code = code

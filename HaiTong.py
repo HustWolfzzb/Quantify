@@ -67,14 +67,6 @@ class Stock():
 def get_Account():
     return User(user)
 
-def save_para_once(code, price, amount):
-    string = json.dumps({code:{'price':price, 'amount':amount}})
-    with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
-        log.write(string)
-
-def load_para_once(code):
-    with open('cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
-        return json.load(f)
 
 if __name__ == '__main__':
     grid_bs(['513550','510050','002044','000725','600031'])
