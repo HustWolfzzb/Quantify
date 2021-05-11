@@ -168,7 +168,7 @@ def load_gaps():
 def grid_bs():
     # start = False
     count = 0
-    codes = ['513550','002044','000725']
+    codes = ['513550','510050','002044','000725']
     buy_amount = 100
     sell_amount = 100
     gaps = load_gaps()
@@ -189,24 +189,22 @@ def grid_bs():
                 code = codes[i]
                 gap = gaps[code]
                 price_now = price_nows[i]
-                if count % 360 == 0:
-                    print("\r%s当前价格:%s" % (code, price_now))
-               # if count % 10 == 0:
-                #    print(code, gap, price_now)
                 operate_price = operate_prices[i]
+                if count % 120 == 0:
+                    print("\r%s:【Pirce:%s, Gap:%s, Operate:%s " % (code, price_now, gap, operate_price))
                 if price_now < operate_price - gap:
                     buy_price = round(operate_price - gap,3)
                     buy_amount = buy_amount
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
-                    print("Price  Now:%s"%price_now)
+                    print("Price  Now:%s, Operate_price:%s"%(price_now, buy_price))
                     save_para_once(code, buy_price, buy_amount)
                     operate_prices[i] = buy_price
                 if price_now > operate_price + gap:
-                    sell_price = round(operate_pri + gap, 3)
+                    sell_price = round(operate_price + gap, 3)
                     sell_amount = sell_amount
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_para_once(code, sell_price, sell_amount)
-                    print("Price  Now:%s"%price_now)
+                    print("Price  Now:%s, Operate_price:%s"%(price_now, sell_price))
                     operate_prices[i] = sell_price
             except KeyError as e:
                 print(e)
