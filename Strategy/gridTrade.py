@@ -1,5 +1,7 @@
 import json
-from HaiTong import Trade, get_all_price,save_para_once,load_para_once
+from DataEngine.Data import get_qo
+from Trade.Oprationn import Trade
+from HaiTong import save_para_once,load_para_once
 import time
 
 def save_gaps_once(gaps):
@@ -12,7 +14,15 @@ def load_gaps():
         return json.load(f)
 
 
-def grid_bs(codes):
+qo = get_qo()
+# codes = ['515880']
+# names = ['通信etf']
+
+def get_all_price(codes = ['512900','515650','159801','515880']):
+    return qo.stocks(codes)
+
+
+def grid_bs(codes, user, ):
     # start = False
     count = 0
     buy_amount = 100
@@ -23,8 +33,8 @@ def grid_bs(codes):
     for c in codes:
         operate_prices.append(float(load_para_once(c)[c]['price']))
     print(operate_prices)
-    buyer = Trade(codes[0], operate_prices[0], 100, 'b')
-    seller = Trade(codes[0], operate_prices[0], 100, 's')
+    buyer = Trade(user, codes[0], operate_prices[0], 100, 'b')
+    seller = Trade(user, codes[0], operate_prices[0], 100, 's')
     while True:
         time.sleep(0.5)
         p = get_all_price(codes)
