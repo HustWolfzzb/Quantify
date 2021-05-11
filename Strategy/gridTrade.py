@@ -1,4 +1,6 @@
 import json
+import os
+
 from DataEngine.Data import get_qo
 from Trade.Operation import Trader
 import time
@@ -7,20 +9,20 @@ BASE_DIR = get_BASE_DIR()
 
 def save_para_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}})
-    with open(BASE_DIR+'/cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
+    with open(os.path.join(BASE_DIR,'cache/%s-log.txt'%code), 'w', encoding='utf8') as log:
         log.write(string)
 
 def load_para_once(code):
-    with open(BASE_DIR+'/cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
+    with open(os.path.join(BASE_DIR,'cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
         return json.load(f)
 
 def save_gaps_once(gaps):
     string = json.dumps(gaps)
-    with open(BASE_DIR+'/cache/gaps.txt', 'w', encoding='utf8') as log:
+    with open(os.path.join(BASE_DIR,'cache/gaps.txt'), 'w', encoding='utf8') as log:
         log.write(string)
 
 def load_gaps():
-    with open(BASE_DIR+'/cache/gaps.txt', 'r', encoding='utf8') as f:
+    with open(os.path.join(BASE_DIR,'cache/gaps.txt'), 'r', encoding='utf8') as f:
         return json.load(f)
 
 
