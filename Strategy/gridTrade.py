@@ -4,8 +4,6 @@ import os
 from DataEngine.Data import get_qo
 from Trade.Operation import Trader
 import time
-from Config.Config import get_BASE_DIR
-BASE_DIR = get_BASE_DIR()
 
 def save_para_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}})
