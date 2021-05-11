@@ -9,6 +9,7 @@ def getFileAbsolutePath(nowDir):
         return "/Users/zhangzhaobo/PycharmProjects/Quantify/Config/info.json"
     else:
         return os.path.join(os.getcwd(), 'Config\info.json')
+
 def get_BASE_DIR():
     d = os.getcwd()
     if d.find('\\') != -1:
