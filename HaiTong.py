@@ -1,8 +1,8 @@
 import easytrader
-import time
 from DataEngine.Data import get_qo
 import json
 import sys
+from Strategy.gridTrade import grid_bs
 
 # user = easytrader.use('htzq_client')
 if sys.platform == 'linux':
@@ -27,20 +27,6 @@ qo = get_qo()
 # codes = ['515880']
 # names = ['通信etf']
 codes = ['512900','515650','159801','515880']
-names = [ '证券基金', '消费50','芯片基金','通信etf']
-change_ = [0.004, 0.004, 0.005, 0.004]
-operate = [100,200,300,400,
-           500,600,800,900,
-           1000,1200,1400,1600,
-           2000,2500,3000,4000 ]
-open_sell = {}
-open_buy = {}
-for x in codes:
-    open_sell[x] = []
-    open_buy[x] = []
-
-
-
 
 def get_all_price(codes = codes):
     return qo.stocks(codes)
@@ -87,6 +73,7 @@ class Stock():
 
 class Trade():
     def __init__(self, code, price, amount, type):
+
         self.code = code
         if code[0] == '5':
             self.price = round(price,3)
@@ -155,66 +142,5 @@ def load_para_once(code):
     with open('cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
         return json.load(f)
 
-def save_gaps_once(gaps):
-    string = json.dumps(gaps)
-    with open('cachegaps.txt', 'w', encoding='utf8') as log:
-        log.write(string)
-
-def load_gaps():
-    with open('cache/gaps.txt', 'r', encoding='utf8') as f:
-        return json.load(f)
-
-
-def grid_bs():
-    # start = False
-    count = 0
-    codes = ['513550','510050','002044','000725','600031']
-    buy_amount = 100
-    sell_amount = 100
-    gaps = load_gaps()
-    print(gaps)
-    operate_prices=[]
-    for c in codes:
-        operate_prices.append(float(load_para_once(c)[c]['price']))
-    print(operate_prices)
-    buyer = Trade(codes[0], operate_prices[0], 100, 'b')
-    seller = Trade(codes[0], operate_prices[0], 100, 's')
-    while True:
-        time.sleep(0.5)
-        p = get_all_price(codes)
-        count += 1
-        price_nows = [p[code]['now'] for code in codes]
-        for i in range(len(codes)):
-            try:
-                code = codes[i]
-                gap = gaps[code]
-
-                price_now = price_nows[i]
-                operate_price = operate_prices[i]
-                if count % 3600 == 0:
-                    print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
-                if price_now < operate_price - gap:
-                    buy_price = round(operate_price - gap,3)
-                    buy_amount = buy_amount
-                    buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
-                    print("Price  Now:%s, Operate_price:%s】"%(price_now, buy_price))
-                    save_para_once(code, buy_price, buy_amount)
-                    operate_prices[i] = buy_price
-                # if codes[0:3] == '513':
-                #     gap = gap * 2
-                if price_now > operate_price + gap:
-                    sell_price = round(operate_price + gap, 3)
-                    sell_amount = sell_amount
-                    sell_id = seller.trade(code, sell_price, sell_amount, 's')
-                    save_para_once(code, sell_price, sell_amount)
-                    print("Price  Now:%s, Operate_price:%s"%(price_now, sell_price))
-                    operate_prices[i] = sell_price
-            except KeyError as e:
-                print(e)
-            except Exception as e:
-                if str(e).find('客户股票不足'):
-                    print('客户%s股票不足'%codes[i])
-
-
 if __name__ == '__main__':
-    grid_bs()
+    grid_bs(['513550','510050','002044','000725','600031'])
