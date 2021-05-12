@@ -3,6 +3,7 @@ import json
 import sys
 from Strategy.gridTrade import grid_bs
 
+
 # user = easytrader.use('htzq_client')
 if sys.platform == 'linux':
     user = ''
@@ -21,7 +22,6 @@ else:
 # user.prepare(user='张照博', password='xxx', comm_password='xxx')
 # user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
 # user.buy()
-
 
 class User():
     def __init__(self, user):

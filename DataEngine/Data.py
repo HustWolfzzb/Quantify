@@ -37,6 +37,7 @@ config = Config('ts').getInfo()
 def get_pro():
     return ts.pro_api(config['api'])
 
+ts.set_token(config['api'])
 
 """
 此处为获取全局的工具：
@@ -107,9 +108,6 @@ def get_tick_price(code='sh', ktype='5'):
         date_prices[s].reverse()
     return sorted(date_prices.items(), key=lambda date_prices:date_prices[0],reverse=False)
 
-def fund_basic(market='E'):
-    pro.fund_basic(market='E')
-
 def get_concept():
     return pro.concept()
 
@@ -158,6 +156,11 @@ def get_pro_daily(ts_code, start_date='2021-01-04', end_date= str(datetime.date.
     else:
         return pro.daily()
 
+def get_fund_basic():
+    return pro.fund_basic(market='E')
+
+def get_fund_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029'):
+    return ts.pro_bar(ts_code=ts_code,  asset = 'FD', start_date=start_date, end_date=end_date)
 
 
 if __name__ == '__main__':

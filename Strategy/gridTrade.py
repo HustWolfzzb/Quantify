@@ -5,6 +5,7 @@ from DataEngine.Data import get_qo
 from Trade.Operation import Trader
 import time
 
+
 def save_para_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}})
     with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
@@ -32,7 +33,7 @@ def get_all_price(codes=['512900','515650','159801','515880']):
     return qo.stocks(codes)
 
 
-def grid_bs(codes, user ):
+def grid_bs(codes, user):
     # start = False
     count = 0
     buy_amount = 100
@@ -54,7 +55,6 @@ def grid_bs(codes, user ):
             try:
                 code = codes[i]
                 gap = gaps[code]
-
                 price_now = price_nows[i]
                 operate_price = operate_prices[i]
                 if count % 3600 == 0:
@@ -68,7 +68,7 @@ def grid_bs(codes, user ):
                     operate_prices[i] = buy_price
                 # if codes[0:3] == '513':
                 #     gap = gap * 2
-                if price_now > operate_price + gap:
+                if price_now > operate_price + gap * 1.5:
                     sell_price = round(operate_price + gap, 3)
                     sell_amount = sell_amount
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
