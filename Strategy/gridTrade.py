@@ -76,7 +76,6 @@ def grid_bs(codes, user):
                 # if codes[0:3] == '513':
                 #     gap = gap * 2
                 if (code[0] != '5' and price_now > operate_price + gap) or (price_now > operate_price + gap * 1.5):
-
                     sell_price = round(operate_price + gap, 3)
                     sell_amount = sell_amount_base
                     # sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)

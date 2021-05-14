@@ -21,10 +21,10 @@ def get_Date_base_gap(timebase, timegap):
     monthAgo = monthAgo.strftime("%Y%m%d")
     return today, monthAgo
 
+all_etf = get_all_alive_fund(180)
 
 def get_sorted_etf_data(timebase=0, timegap=30):
     today, monthAgo = get_Date_base_gap(timebase, timegap)
-    all_etf = get_all_alive_fund(180)
     etf2data = {}
     count = 0
     for e in all_etf:
@@ -51,7 +51,7 @@ def get_sorted_etf_data(timebase=0, timegap=30):
     return d_order
 
 def buy_topK(timebase = 60, K = 10):
-    df =  get_sorted_etf_data(timebase, 20)
+    df =  get_sorted_etf_data(timebase, 50)
     # df1 =  get_sorted_etf_data(timebase, 20)
     # df2 =  get_sorted_etf_data(timebase, 50)
     topK = [x for x in df[:K]]
@@ -59,7 +59,7 @@ def buy_topK(timebase = 60, K = 10):
     codes = [x[0] for x in topK]
     # codes1 = [x[0] for x in df1[:K]]
     # codes2 = [x[0] for x in df2[:K]]
-    today, monthAgo = get_Date_base_gap(timebase-5, timebase)
+    today, monthAgo = get_Date_base_gap(timebase-20, 20)
     count = 0
     # time.sleep(60)
     ave = []
@@ -73,15 +73,18 @@ def buy_topK(timebase = 60, K = 10):
         data = data[data['trade_date'] >= int(monthAgo)]
         price_change = (data.iloc[0, :]['close'] - data.iloc[-1, :]['close']) / data.iloc[-1, :]['close']
         ave.append(price_change)
-        print("Top %s【%s】,PRE_MONTH:%s(%s), THIS_MONTH:%s(%s)"%(i, codes[i], round(code_change[codes[i]],3), data.iloc[-1, :]['close'], round(price_change,3), data.iloc[0, :]['close']))
+        # print("Top %s【%s】,PRE_MONTH:%s(%s), THIS_MONTH:%s(%s)"%(i, codes[i], round(code_change[codes[i]],3), data.iloc[-1, :]['close'], round(price_change,3), data.iloc[0, :]['close']))
         count += 1
-    print("TIMEGAP:%s, K:%s, Average Earn:%s"%(timebase-5, K, sum(ave)/len(ave)))
+    print("TIMEGAP:%s, K:%s, Average Earn:%s"%(timebase-20, K, sum(ave)/len(ave)))
 
 
 if __name__ == '__main__':
-    # buy_topK()
-    for i in [5,10,20,30,40,50,60,70,80,90,100]:
+    for i in [20,30,40,50,60,70,80,90,100,110, 120]:
         for j in [5,10]:
             buy_topK(i, j)
-            time.sleep(6)
+            # time.sleep(6)
         print("======")
+
+    # df = get_sorted_etf_data(0, 20)
+    # for i in df:
+    #     print(i)
