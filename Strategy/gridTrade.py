@@ -26,18 +26,20 @@ def load_gaps():
 
 
 qo = get_qo()
-# codes = ['515880']
-# names = ['通信etf']
-
 def get_all_price(codes=['512900','515650','159801','515880']):
     return qo.stocks(codes)
 
+def abs_reduce(x, y):
+    if x > y:
+        return x - y
+    else:
+        return y - x
 
 def grid_bs(codes, user):
     # start = False
     count = 0
-    buy_amount = 100
-    sell_amount = 100
+    buy_amount_base = 100
+    sell_amount_base = 100
     gaps = load_gaps()
     print(gaps)
     operate_prices=[]
@@ -51,9 +53,11 @@ def grid_bs(codes, user):
         p = get_all_price(codes)
         count += 1
         price_nows = [p[code]['now'] for code in codes]
+        closes = [p[code]['close'] for code in codes]
         for i in range(len(codes)):
             try:
                 code = codes[i]
+                close = closes[i]
                 gap = gaps[code]
                 price_now = price_nows[i]
                 operate_price = operate_prices[i]
@@ -61,16 +65,23 @@ def grid_bs(codes, user):
                     print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
                 if price_now < operate_price - gap:
                     buy_price = round(operate_price - gap,3)
-                    buy_amount = buy_amount
+                    buy_amount = buy_amount_base
+                    # buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
+                    if code[:3] == '513':
+                        buy_amount = 300
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
                     print("Price  Now:%s, Operate_price:%s】"%(price_now, buy_price))
                     save_para_once(code, buy_price, buy_amount)
                     operate_prices[i] = buy_price
                 # if codes[0:3] == '513':
                 #     gap = gap * 2
-                if price_now > operate_price + gap * 1.5:
+                if (code[0] != '5' and price_now > operate_price + gap) or (price_now > operate_price + gap * 1.5):
+
                     sell_price = round(operate_price + gap, 3)
-                    sell_amount = sell_amount
+                    sell_amount = sell_amount_base
+                    # sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)
+                    if code[:3]=='513':
+                        sell_amount = 300
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_para_once(code, sell_price, sell_amount)
                     print("Price  Now:%s, Operate_price:%s"%(price_now, sell_price))
