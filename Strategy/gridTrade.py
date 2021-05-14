@@ -65,8 +65,8 @@ def grid_bs(codes, user):
                     print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
                 if price_now < operate_price - gap:
                     buy_price = round(operate_price - gap,3)
-                    buy_amount = buy_amount_base
-                    # buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
+                    # buy_amount = buy_amount_base
+                    buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
                     if code[:3] == '513':
                         buy_amount = 300
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
@@ -77,10 +77,10 @@ def grid_bs(codes, user):
                 #     gap = gap * 2
                 if (code[0] != '5' and price_now > operate_price + gap) or (price_now > operate_price + gap * 1.5):
                     sell_price = round(operate_price + gap, 3)
-                    sell_amount = sell_amount_base
-                    # sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)
+                    # sell_amount = sell_amount_base
+                    sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)
                     if code[:3]=='513':
-                        sell_amount = 300
+                        sell_amount *= 3
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_para_once(code, sell_price, sell_amount)
                     print("Price  Now:%s, Operate_price:%s"%(price_now, sell_price))
