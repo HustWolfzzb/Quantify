@@ -77,10 +77,10 @@ def grid_bs(codes, user):
                 #     gap = gap * 2
                 if (code[0] != '5' and price_now > operate_price + gap) or (price_now > operate_price + gap * 1.5):
                     sell_price = round(operate_price + gap, 3)
-                    # sell_amount = sell_amount_base
-                    sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)
+                    sell_amount = sell_amount_base
+                    # sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)
                     if code[:3]=='513':
-                        sell_amount *= 3
+                        sell_amount = 300
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_para_once(code, sell_price, sell_amount)
                     print("Price  Now:%s, Operate_price:%s"%(price_now, sell_price))
