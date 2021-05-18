@@ -48,6 +48,9 @@ def grid_bs(codes, user):
     print(operate_prices)
     buyer = Trader(user, codes[0], operate_prices[0], 100, 'b')
     seller = Trader(user, codes[0], operate_prices[0], 100, 's')
+    p = get_all_price(codes)
+    closes = [p[code]['close'] for code in codes]
+    print(closes)
     while True:
         time.sleep(0.5)
         p = get_all_price(codes)
@@ -61,8 +64,8 @@ def grid_bs(codes, user):
                 gap = gaps[code]
                 price_now = price_nows[i]
                 operate_price = operate_prices[i]
-                if count % 3600 == 0:
-                    print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
+                # if count % 3600 == 0:
+                    # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
                 if price_now < operate_price - gap:
                     buy_price = round(operate_price - gap, 3)
                     # buy_amount = buy_amount_base

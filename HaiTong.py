@@ -1,7 +1,7 @@
 import easytrader
 import json
 import sys
-from Strategy.gridTrade import grid_bs
+from Strategy.gridTrade import grid_bs, time
 
 
 # user = easytrader.use('htzq_client')
@@ -69,4 +69,7 @@ def get_Account():
 
 
 if __name__ == '__main__':
-    grid_bs(['513550','002044','000725','600031'], user)
+    # grid_bs(['513550', '002044','000725','600031'], user)
+    grid_bs(['600900', '002044','000725','600031'], user)
+    # grid_bs(['513550','600900', '002044','000725','600031'], user)
+    # grid_bs(['513550','510050','002044','000725','600031'], user)
