@@ -66,7 +66,7 @@ def grid_bs(codes, user):
                 operate_price = operate_prices[i]
                 # if count % 3600 == 0:
                     # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
-                if price_now < operate_price - gap:
+                if price_now < operate_price - gap * 1.5:
                     buy_price = round(operate_price - gap, 3)
                     # buy_amount = buy_amount_base
                     buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
