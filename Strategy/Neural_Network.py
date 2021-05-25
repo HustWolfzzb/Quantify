@@ -73,14 +73,14 @@ w1 = tf.Variable(tf.random_uniform([features_num, 25], 0, 1))
 b1 = tf.Variable(tf.random_uniform([25],0,1))
 out_put_hidden1 = tf.matmul(x,w1)+b1
 # layer1 = tf.nn.sigmoid(out_put_hidden1) # 激励函数
-# hidden_layer->output
-w2 = tf.Variable(tf.random_uniform([25,1],0,1))
-b2 = tf.Variable(tf.random_uniform([1],0,1))
-output = tf.matmul(out_put_hidden1, w2) + b2
-# down = tf.reshape(y - output, [-1,1])
+# # hidden_layer->output
+# w2 = tf.Variable(tf.random_uniform([25,1],0,1))
+# b2 = tf.Variable(tf.random_uniform([1],0,1))
+# output = tf.matmul(layer1, w2) + b2
+# # down = tf.reshape(y - output, [-1,1])
 # layer2 = tf.nn.relu(output)
-layer2 = y-output
-loss = tf.reduce_sum(tf.square(layer2)) #y为真实数据， layer2为网络预测结果
+# layer2 = y-output
+loss = tf.reduce_sum(tf.square(out_put_hidden1 - y)) #y为真实数据， layer2为网络预测结果
 # loss1 = tf.reduce_sum(loss, 1, keep_dims=False)
 
 def run():

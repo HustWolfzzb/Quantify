@@ -119,6 +119,7 @@ def get_stock_concepts(code):
         return pro.concept_detail(id=code, fields='ts_code,name')
     return pro.concept_detail(ts_code = code)
 
+
 def get_fina_indicator(ts_code):
     """
     :function
@@ -130,12 +131,22 @@ def get_fina_indicator(ts_code):
     """
     return pro.fina_indicator(ts_code = ts_code)
 
-def get_index(code, sdate, edate):
-    return pro.index_daily(ts_code=code,start_date=sdate,end_date=edate)
+def get_daily_basic(date='20000101'):
+    if date == '20000101':
+        date = datetime.datetime.now().strftime("%Y%m%d")
+    df = pro.daily_basic(ts_code='', trade_date=date,
+                         fields='ts_code,trade_date,close,turnover_rate,volume_ratio,pe,pb,free_share,total_mv')
+    return df
 
-def get_index_basic():
-    return pro.index_basic()
+def get_index(ts_code='399300.SZ', start_date='20180101', end_date='20181010'):
+    df = pro.index_daily(ts_code=ts_code,start_date=start_date,end_date=end_date)
+    return df
 
+def get_index_basic(market='SSE'):
+    return pro.index_basic(market=market)
+
+def get_index_weight(code='399300.SZ',start_date='20180901', end_date='20180930'):
+    return pro.index_weight(index_code = code,start_date= start_date, end_date = end_date )
 
 def get_stock_list_date(to_lower=True):
     def lower(c):
@@ -150,6 +161,15 @@ def get_stock_list_date(to_lower=True):
 def get_pro_stock_basic(fields='ts_code,symbol,name,area,industry,list_date'):
     return pro.stock_basic(exchange='', list_status='L', fields=fields)
 
+def get_stock_name():
+    def lower(c):
+        return c.lower()
+    stock_basic = get_pro_stock_basic(fields='ts_code,name')
+    name = list(stock_basic['name'])
+    codes = list(stock_basic['ts_code'])
+    code_name = {codes[x]: name[x] for x in range(len(codes))}
+    return code_name
+
 def get_pro_daily(ts_code, start_date='2021-01-04', end_date= str(datetime.date.today().isoformat()).replace('-','')):
     if type(ts_code) == str:
         return pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
@@ -161,8 +181,21 @@ def get_pro_daily(ts_code, start_date='2021-01-04', end_date= str(datetime.date.
 def get_fund_basic(EO='E'):
     return pro.fund_basic(market=EO)
 
+def get_fund_name():
+    ss = get_fund_basic()
+    code_name = {}
+    for i in range(len(ss)):
+        code = ss.loc[i,'ts_code']
+        name = ss.loc[i,'name']
+        code_name[code] = name
+    return code_name
+
+
 def get_fund_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029'):
     return ts.pro_bar(ts_code=ts_code,  asset = 'FD', start_date=start_date, end_date=end_date)
+
+def get_stock_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029'):
+    return ts.pro_bar(ts_code=ts_code,  asset = 'E', start_date=start_date, end_date=end_date, adj='qfq')
 
 
 if __name__ == '__main__':

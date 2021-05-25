@@ -3,9 +3,15 @@ import numpy as np
 import tushare as ts
 ts.set_token('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
 
-def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101', ma=[5, 20, 50], adj='qfq', type='C'):
+def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101', ma=[5, 20, 50], adj='qfq', type='C', need_col=[], token=0):
+    if token==0:
+        ts.set_token('4b98f5087a086ac0e0d759ce67daeb8a2de2773e12553e3989b303dd')
+    else:
+        ts.set_token('ca90866f7926f04be67572bc79b935fea5191a78abf7194ebd294644')
     data = ts.pro_bar(ts_code=ts_code, start_date=start_date, end_date=end_date, ma=ma, adj=adj)
     data = data[::-1].reset_index()
+    if len(data)<49:
+        return []
     data['delta_ma5'] = (data['close'] - data['ma5'] ) / data['close']
     data['delta_ma20'] = (data['close'] - data['ma20'] )/ data['close']
     data['delta_ma50'] = (data['close'] - data['ma50'] )/ data['close']
@@ -22,7 +28,8 @@ def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101'
     data['RSI-7'] = -1
     data['RSI-21'] = -1
     data['RSI-49'] = -1
-    need_col = [ 'pct_chg', 'delta_ma5', 'delta_ma20',
+    if len(need_col) == 0:
+        need_col = [ 'pct_chg', 'delta_ma5', 'delta_ma20',
            'delta_ma50', 'delta_ma_v_5', 'delta_ma_v_20', 'delta_ma_v_50',
            'RSI-7', 'RSI-21', 'RSI-49', 'vol_chg', 'mo5', 'mo15', 'mo30']
     if type!='C':
@@ -33,6 +40,8 @@ def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101'
     data = data.iloc[49:,:]
     data.set_index(['trade_date'], inplace=True)
     X = data[need_col]
+    X.apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
+
     if type=='C':
         y_cls = data.zhangdie
     else:
