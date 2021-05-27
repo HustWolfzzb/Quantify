@@ -107,4 +107,5 @@ def grid_bs(codes, user):
             except Exception as e:
                 if str(e).find('客户股票不足'):
                     print('客户%s股票不足'%codes[i])
+                    return code
 
