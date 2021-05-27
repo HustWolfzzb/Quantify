@@ -5,13 +5,12 @@ from DataEngine.Data import get_qo
 from Trade.Operation import Trader
 import time
 
-
-def save_para_once(code, price, amount):
+def save_trade_log_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}})
     with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
         log.write(string)
 
-def load_para_once(code):
+def load_trade_log_once(code):
     with open('cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
         return json.load(f)
 
@@ -24,13 +23,13 @@ def load_gaps():
     with open('cache/gaps.txt', 'r', encoding='utf8') as f:
         return json.load(f)
 
-def save_rates_once(rates, type):
-    string = json.dumps(rates)
-    with open('cache/%s_rates.txt'%type, 'w', encoding='utf8') as log:
+def save_rates_once(rates):
+    string = json.dumps(rates, indent=4)
+    with open('cache/rates.txt', 'w', encoding='utf8') as log:
         log.write(string)
 
-def load_rates(type):
-    with open('cache/%s_rates.txt'%type, 'r', encoding='utf8') as f:
+def load_rates():
+    with open('cache/rates.txt', 'r', encoding='utf8') as f:
         return json.load(f)
 
 
@@ -49,13 +48,13 @@ def grid_bs(codes, user):
     count = 0
     buy_amount_base = 100
     sell_amount_base = 100
-    buy_rates = load_rates('buy')
-    sell_rates = load_rates('sell')
+    buy_rates = load_rates()['buy']
+    sell_rates = load_rates()['sell']
     gaps = load_gaps()
     print(gaps)
     operate_prices=[]
     for c in codes:
-        operate_prices.append(float(load_para_once(c)[c]['price']))
+        operate_prices.append(float(load_trade_log_once(c)[c]['price']))
     print(operate_prices)
     buyer = Trader(user, codes[0], operate_prices[0], 100, 'b')
     seller = Trader(user, codes[0], operate_prices[0], 100, 's')
@@ -89,7 +88,7 @@ def grid_bs(codes, user):
                     #     buy_amount = 300
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
                     print("Price  Now:%s, Operate_price:%s】" % (price_now, buy_price))
-                    save_para_once(code, buy_price, buy_amount)
+                    save_trade_log_once(code, buy_price, buy_amount)
                     operate_prices[i] = buy_price
 
                 if price_now > operate_price + gap * sell_rate:
@@ -99,7 +98,7 @@ def grid_bs(codes, user):
                     # if code[:3] == '513':
                     #     sell_amount = 300
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
-                    save_para_once(code, sell_price, sell_amount)
+                    save_trade_log_once(code, sell_price, sell_amount)
                     print("Price  Now:%s, Operate_price:%s" % (price_now, sell_price))
                     operate_prices[i] = sell_price
             except KeyError as e:
