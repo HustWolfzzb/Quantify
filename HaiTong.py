@@ -4,7 +4,6 @@ import sys
 from Strategy.gridTrade import grid_bs, time
 
 
-# user = easytrader.use('htzq_client')
 if sys.platform == 'linux':
     user = ''
 elif sys.platform == 'darwin':
@@ -13,10 +12,11 @@ else:
     user = easytrader.use('ths')
     user.connect(r'E:\Program Files\东方同花顺\xiadan.exe')
 
-# 类似 r'C:\htzqzyb2\xiadan.exe'
-# user.connect(r'E:\Program Files\EastTonghuashun\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
-# user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
-#user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+
+    # 类似 r'C:\htzqzyb2\xiadan.exe'
+    # user = easytrader.use('htzq_client')
+    # user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
+    # user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
 
 
 # user.prepare(user='张照博', password='xxx', comm_password='xxx')
@@ -69,7 +69,7 @@ def get_Account():
 
 
 if __name__ == '__main__':
-    codes = ['600900', '002044', '000725', '600031']
+    codes = ['510050', '588000', '600900', '002044', '000725', '600031']
     # print(user.position)
     # grid_bs(['513550', '002044','000725','600031'], user)
     # grid_bs(['600900', '600036', '510050', '002044','000725','600031'], user)
