@@ -6,7 +6,6 @@ import json
 import sys
 from Strategy.gridTrade import grid_bs, time, save_gaps_once, load_gaps, load_rates, load_trade_log_once, save_rates_once, save_trade_log_once
 
-
 if sys.platform == 'linux':
     user = ''
 elif sys.platform == 'darwin':
@@ -60,6 +59,12 @@ class Stock():
 def get_Account():
     return User(user)
 
+def change_code_name():
+    existFile = [ x[:6] for x in os.listdir('cache/') if x.find('-log')!=-1]
+    for code in existFile:
+        data = load_trade_log_once(code)
+        save_trade_log_once(code, data[code]['price'], data[code]['amount'])
+
 
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
@@ -69,7 +74,6 @@ if __name__ == '__main__':
     buy_rates = load_rates('buy')
     sell_rates = load_rates('sell')
     for i in user.position:
-
         code = i['证券代码']
         if "%s-log.txt"%code in existFile:
             print("%s-log.txt exist, replace it please!"%code)
@@ -86,6 +90,6 @@ if __name__ == '__main__':
     save_rates_once(buy_rates,'buy')
     save_rates_once(sell_rates,'sell')
 
-    while len(codes) > 0:
-        s = grid_bs(codes, user)
-        codes.remove(s)
+    # while len(codes) > 0:
+    #     s = grid_bs(codes, user)
+    #     codes.remove(s)
