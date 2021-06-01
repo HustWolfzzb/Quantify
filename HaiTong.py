@@ -1,3 +1,5 @@
+import datetime
+
 import easytrader
 import json
 import sys
@@ -69,11 +71,19 @@ def get_Account():
 
 
 if __name__ == '__main__':
-    codes = ['510050', '588000', '600900', '002044', '000725', '600031']
-    # print(user.position)
+    # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
+    codes = ['510050', '601666', '600900', '002044', '000725', '600031', '601607', '603126']
+    # data = user.position
+    # for k,v in data.items():
+    #     print(k, v)
     # grid_bs(['513550', '002044','000725','600031'], user)
     # grid_bs(['600900', '600036', '510050', '002044','000725','600031'], user)
+    timeReady = False
     while len(codes) > 0:
+        # if int(datetime.datetime.now().strftime('%H')) < 9 or datetime.datetime.now().strftime('%M') < '29':
+        #         print("\rWait!%s")
+        #         time.sleep(60)
+        #         continue
         s = grid_bs(codes, user)
         codes.remove(s)
 
