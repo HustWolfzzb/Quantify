@@ -63,8 +63,9 @@ def get_Account():
 
 
 if __name__ == '__main__':
-    # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
-    codes = [i['证券代码'] for i in user.position]
+    # codes = [i['证券代码'] for i in user.position]
+    codes = ['000488', '000519', '002044', '600048', '601311', '002457', '002026']
+
     print(codes)
     code2name(codes)
     # existFile = os.listdir('cache/')
