@@ -91,7 +91,10 @@ def grid_bs(codes, user):
                 # if count % 3600 == 0:
                     # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
                 if price_now < operate_price - gap * buy_rate:
-                    buy_price = round(operate_price - gap, 3)
+                    if code[0] != '5':
+                        buy_price = round(operate_price - gap, 2)
+                    else:
+                        buy_price = round(operate_price - gap, 3)
                     buy_amount = buy_amount_base
                     #buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
                     # if code[:3] == '513':
@@ -102,7 +105,10 @@ def grid_bs(codes, user):
                     operate_prices[i] = buy_price
 
                 if price_now > operate_price + gap * sell_rate:
-                    sell_price = round(operate_price + gap, 3)
+                    if code[0] != '5':
+                        sell_price = round(operate_price + gap, 2)
+                    else:
+                        sell_price = round(operate_price + gap, 3)
                     sell_amount = sell_amount_base
                     # sell_amount = sell_amount_base  * int(abs_reduce(price_now, close) // (gap * 3) + 1)
                     # if code[:3] == '513':
