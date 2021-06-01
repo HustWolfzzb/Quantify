@@ -7,7 +7,7 @@ import time
 
 
 def save_trade_log_once(code, price, amount):
-    string = json.dumps({code:{'price':price, 'amount':amount}})
+    string = json.dumps({code:{'price':price, 'amount':amount}}, indent=4)
     with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
         log.write(string)
 
@@ -16,7 +16,7 @@ def load_trade_log_once(code):
         return json.load(f)
 
 def save_gaps_once(gaps):
-    string = json.dumps(gaps)
+    string = json.dumps(gaps, indent=4)
     with open('cache/gaps.txt', 'w', encoding='utf8') as log:
         log.write(string)
 
@@ -25,7 +25,7 @@ def load_gaps():
         return json.load(f)
 
 def save_rates_once(rates, type):
-    string = json.dumps(rates)
+    string = json.dumps(rates, indent=4)
     with open('cache/%s_rates.txt'%type, 'w', encoding='utf8') as log:
         log.write(string)
 
