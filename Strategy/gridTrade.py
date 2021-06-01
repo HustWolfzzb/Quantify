@@ -1,16 +1,19 @@
 import json
 import os
 
-from DataEngine.Data import get_qo
+from DataEngine.Data import get_qo, get_stock_name
 from Trade.Operation import Trader
 import time
 
-data = get_stock_name()
-print(data)
-# code_name = {k[:6]:v for k,v in data.items()}
-# code_name['510050'] = '上证50'
-# code_name['513550'] = '港股通50'
-# code_name['513550'] = '港股通50'
+code_name = {k[:6]:v for k,v in get_stock_name().items()}
+code_name['510050'] = '上证50'
+code_name['513550'] = '港股通50'
+code_name['513550'] = '港股通50'
+
+def code2name(codes):
+    existFile = [ x[:6] for x in os.listdir('cache/') if x[:6] in codes]
+    for i in existFile:
+        print("%s:%s"%(i, code_name[i]))
 
 def save_trade_log_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}}, indent=4)

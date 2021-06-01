@@ -3,7 +3,7 @@ import datetime
 import easytrader
 import json
 import sys
-from Strategy.gridTrade import grid_bs, time
+from Strategy.gridTrade import grid_bs, time, code2name
 
 
 if sys.platform == 'linux':
@@ -73,6 +73,7 @@ def get_Account():
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
     codes = ['510050', '601666', '600900', '002044', '000725', '600031', '601607', '603126']
+    code2name(codes)
     # data = user.position
     # for k,v in data.items():
     #     print(k, v)

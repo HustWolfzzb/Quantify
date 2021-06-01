@@ -4,8 +4,9 @@ import os
 import easytrader
 import json
 import sys
-from Strategy.gridTrade import grid_bs, time, save_gaps_once, load_gaps, load_rates, load_trade_log_once, save_rates_once, save_trade_log_once
-from DataEngine.Data import get_stock_name
+from Strategy.gridTrade import grid_bs, time, code2name
+
+
 
 if sys.platform == 'linux':
     user = ''
@@ -60,17 +61,12 @@ class Stock():
 def get_Account():
     return User(user)
 
-def change_code_name():
-    code_name = {k[:6]: v for k, v in get_stock_name()}
-    existFile = [ x[:6] for x in os.listdir('cache/') if x.find('-log')!=-1]
-    for code in existFile:
-        data = load_trade_log_once(code)
-        save_trade_log_once(code, data[code]['price'], data[code]['amount'])
-
 
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
-    codes = []
+    codes = [i['证券代码'] for i in user.position]
+    print(codes)
+    code2name(codes)
     # existFile = os.listdir('cache/')
     # gaps = load_gaps()
     # buy_rates = load_rates('buy')
