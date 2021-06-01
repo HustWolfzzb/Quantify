@@ -65,7 +65,6 @@ README也好久没更新了，所以今天更新下我之前写的一些模块�
 具体的用处参见gridTrade.py的内容。该方法在HaiTong.py中被调用。
 
 ## 实际操作 （HaiTong）
-
 #### 本框架利用easytrader和easyquotation两个包，辅助以Tushare来进行。
  * easytrader的配置稍微有点麻烦，不过按照官网的基本都能跑通。
  * easyquotation主要是用来实时获取股价，比Tushare快十倍而且更加实时。
