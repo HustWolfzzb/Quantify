@@ -3,7 +3,7 @@ import datetime
 import easytrader
 import json
 import sys
-from Strategy.gridTrade import grid_bs, time
+from Strategy.gridTrade import grid_bs, time, save_gaps_once, load_gaps, load_rates, load_trade_log_once, save_rates_once, save_trade_log_once
 
 
 if sys.platform == 'linux':
@@ -62,12 +62,29 @@ def get_Account():
 
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
-    codes = ['510050', '601666', '600900', '002044', '000725', '600031', '601607', '603126']
-    print(user.position)
+    codes = []
+    existFile = os.listdir('cache/')
+    gaps = load_gaps()
+    buy_rates = load_rates('buy')
+    sell_rates = load_rates('sell')
+    for i in user.position:
 
-    timeReady = False
+        code = i['证券代码']
+        if "%s-log.txt"%code in existFile:
+            print("%s-log.txt exist, replace it please!"%code)
+            continue
+        codes.append(code)
+        price = i['成本价']
+        amount = int(i['股票余额']//500) + 100
+        gap = round(price * 0.02, 3)
+        save_trade_log_once(code, price, amount)
+        gaps[code] = gap
+        buy_rates[code] = 1.5
+        sell_rates[code] = 2
+    save_gaps_once(gaps)
+    save_rates_once(buy_rates,'buy')
+    save_rates_once(sell_rates,'sell')
+
     while len(codes) > 0:
         s = grid_bs(codes, user)
         codes.remove(s)
-
-    # grid_bs(['513550','510050','002044','000725','600031'], user)
