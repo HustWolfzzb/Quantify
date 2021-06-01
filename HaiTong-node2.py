@@ -5,6 +5,7 @@ import easytrader
 import json
 import sys
 from Strategy.gridTrade import grid_bs, time, save_gaps_once, load_gaps, load_rates, load_trade_log_once, save_rates_once, save_trade_log_once
+from DataEngine.Data import get_stock_name
 
 if sys.platform == 'linux':
     user = ''
@@ -60,6 +61,7 @@ def get_Account():
     return User(user)
 
 def change_code_name():
+    code_name = {k[:6]: v for k, v in get_stock_name()}
     existFile = [ x[:6] for x in os.listdir('cache/') if x.find('-log')!=-1]
     for code in existFile:
         data = load_trade_log_once(code)
@@ -69,27 +71,27 @@ def change_code_name():
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
     codes = []
-    existFile = os.listdir('cache/')
-    gaps = load_gaps()
-    buy_rates = load_rates('buy')
-    sell_rates = load_rates('sell')
-    for i in user.position:
-        code = i['证券代码']
-        if "%s-log.txt"%code in existFile:
-            print("%s-log.txt exist, replace it please!"%code)
-            continue
-        codes.append(code)
-        price = i['成本价']
-        amount = int(i['股票余额']//500) + 100
-        gap = round(price * 0.02, 3)
-        save_trade_log_once(code, price, amount)
-        gaps[code] = gap
-        buy_rates[code] = 1.5
-        sell_rates[code] = 2
-    save_gaps_once(gaps)
-    save_rates_once(buy_rates,'buy')
-    save_rates_once(sell_rates,'sell')
+    # existFile = os.listdir('cache/')
+    # gaps = load_gaps()
+    # buy_rates = load_rates('buy')
+    # sell_rates = load_rates('sell')
+    # for i in user.position:
+    #     code = i['证券代码']
+    #     if "%s-log.txt"%code in existFile:
+    #         print("%s-log.txt exist, replace it please!"%code)
+    #         continue
+    #     codes.append(code)
+    #     price = i['成本价']
+    #     amount = int(i['股票余额']//500) + 100
+    #     gap = round(price * 0.02, 3)
+    #     save_trade_log_once(code, price, amount)
+    #     gaps[code] = gap
+    #     buy_rates[code] = 1.5
+    #     sell_rates[code] = 2
+    # save_gaps_once(gaps)
+    # save_rates_once(buy_rates,'buy')
+    # save_rates_once(sell_rates,'sell')
 
-    # while len(codes) > 0:
-    #     s = grid_bs(codes, user)
-    #     codes.remove(s)
+    while len(codes) > 0:
+        s = grid_bs(codes, user)
+        codes.remove(s)

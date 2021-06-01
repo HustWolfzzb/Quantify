@@ -1,24 +1,24 @@
 import json
 import os
 
-from DataEngine.Data import get_qo, get_stock_name
+from DataEngine.Data import get_qo
 from Trade.Operation import Trader
 import time
 
 data = get_stock_name()
 print(data)
-code_name = {k[:6]:v for k,v in data.items()}
-code_name['510050'] = '上证50'
-code_name['513550'] = '港股通50'
-code_name['588000'] = '科创50'
+# code_name = {k[:6]:v for k,v in data.items()}
+# code_name['510050'] = '上证50'
+# code_name['513550'] = '港股通50'
+# code_name['513550'] = '港股通50'
 
 def save_trade_log_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}}, indent=4)
-    with open('cache/%s-%s-log.txt'%(code_name[code],code), 'w', encoding='utf8') as log:
+    with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
         log.write(string)
 
 def load_trade_log_once(code):
-    with open('cache/%s-%s-log.txt'%(code_name[code],code), 'r', encoding='utf8') as f:
+    with open('cache/%s-log.txt'%code, 'r', encoding='utf8') as f:
         return json.load(f)
 
 def save_gaps_once(gaps):
