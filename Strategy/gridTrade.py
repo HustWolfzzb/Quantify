@@ -5,6 +5,7 @@ from DataEngine.Data import get_qo
 from Trade.Operation import Trader
 import time
 
+
 def save_trade_log_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}})
     with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
@@ -23,13 +24,13 @@ def load_gaps():
     with open('cache/gaps.txt', 'r', encoding='utf8') as f:
         return json.load(f)
 
-def save_rates_once(rates):
-    string = json.dumps(rates, indent=4)
-    with open('cache/rates.txt', 'w', encoding='utf8') as log:
+def save_rates_once(rates, type):
+    string = json.dumps(rates)
+    with open('cache/%s_rates.txt'%type, 'w', encoding='utf8') as log:
         log.write(string)
 
-def load_rates():
-    with open('cache/rates.txt', 'r', encoding='utf8') as f:
+def load_rates(type):
+    with open('cache/%s_rates.txt'%type, 'r', encoding='utf8') as f:
         return json.load(f)
 
 
@@ -48,8 +49,8 @@ def grid_bs(codes, user):
     count = 0
     buy_amount_base = 100
     sell_amount_base = 100
-    buy_rates = load_rates()['buy']
-    sell_rates = load_rates()['sell']
+    buy_rates = load_rates('buy')
+    sell_rates = load_rates('sell')
     gaps = load_gaps()
     print(gaps)
     operate_prices=[]
@@ -82,8 +83,8 @@ def grid_bs(codes, user):
                     # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
                 if price_now < operate_price - gap * buy_rate:
                     buy_price = round(operate_price - gap, 3)
-                    # buy_amount = buy_amount_base
-                    buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
+                    buy_amount = buy_amount_base
+                    #buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 3) + 1)
                     # if code[:3] == '513':
                     #     buy_amount = 300
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')

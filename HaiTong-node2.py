@@ -11,19 +11,9 @@ if sys.platform == 'linux':
 elif sys.platform == 'darwin':
     user = ''
 else:
-    user = easytrader.use('ths')
-    user.connect(r'E:\Program Files\东方同花顺\xiadan.exe')
+    user = easytrader.use('htzq_client')
+    user.connect(r'C:\Program Files\海通证券委托\xiadan.exe')
 
-
-    # 类似 r'C:\htzqzyb2\xiadan.exe'
-    # user = easytrader.use('htzq_client')
-    # user.connect(r'C:\Program Files\HaiTong\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
-    # user.connect(r'D:\Program Files\海通证券委托\xiadan.exe') # 类似 r'C:\htzqzyb2\xiadan.exe'
-
-
-# user.prepare(user='张照博', password='xxx', comm_password='xxx')
-# user.prepare('D:\Program Files\海通证券委托\yh_client.json')  # 配置文件路径
-# user.buy()
 
 class User():
     def __init__(self, user):
@@ -73,17 +63,10 @@ def get_Account():
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
     codes = ['510050', '601666', '600900', '002044', '000725', '600031', '601607', '603126']
-    # data = user.position
-    # for k,v in data.items():
-    #     print(k, v)
-    # grid_bs(['513550', '002044','000725','600031'], user)
-    # grid_bs(['600900', '600036', '510050', '002044','000725','600031'], user)
+    print(user.position)
+
     timeReady = False
     while len(codes) > 0:
-        # if int(datetime.datetime.now().strftime('%H')) < 9 or datetime.datetime.now().strftime('%M') < '29':
-        #         print("\rWait!%s")
-        #         time.sleep(60)
-        #         continue
         s = grid_bs(codes, user)
         codes.remove(s)
 

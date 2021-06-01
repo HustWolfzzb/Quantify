@@ -1,25 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="zzb@222.20.94.69:50012" showAutoUploadSettingsWarning="false">
+  <component name="PublishConfigData" autoUpload="Always" showAutoUploadSettingsWarning="false">
     <serverData>
       <paths name="node10">
         <serverdata>
           <mappings>
             <mapping deploy="/Quantify" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="zzb@222.20.94.69:50010">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/Quantify" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="zzb@222.20.94.69:50012">
-        <serverdata>
-          <mappings>
-            <mapping deploy="Quantify" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
