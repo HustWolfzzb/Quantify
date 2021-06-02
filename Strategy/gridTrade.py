@@ -103,6 +103,7 @@ def grid_bs(codes, user):
                     print("Price  Now:%s, Operate_price:%s】" % (price_now, buy_price))
                     save_trade_log_once(code, buy_price, buy_amount)
                     operate_prices[i] = buy_price
+                    time.sleep(0.2)
 
                 if price_now > operate_price + gap * sell_rate:
                     if code[0] != '5':
@@ -117,6 +118,7 @@ def grid_bs(codes, user):
                     save_trade_log_once(code, sell_price, sell_amount)
                     print("Price  Now:%s, Operate_price:%s" % (price_now, sell_price))
                     operate_prices[i] = sell_price
+                    time.sleep(0.2)
             except KeyError as e:
                 print(e)
             except Exception as e:
