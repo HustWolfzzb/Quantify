@@ -8,12 +8,18 @@ import time
 code_name = {k[:6]:v for k,v in get_stock_name().items()}
 code_name['510050'] = '上证50'
 code_name['513550'] = '港股通50'
-code_name['513550'] = '港股通50'
+code_name['588000'] = '科创50'
 
-def code2name(codes):
+def code2name(codes, operate={}, gaps={}, close={}, buy_r={}, sell_r = {}):
     existFile = [ x[:6] for x in os.listdir('cache/') if x[:6] in codes]
     for i in existFile:
-        print("%s:%s"%(i, code_name[i]))
+        if len(operate) == 0:
+            print("%s:%s"%(i, code_name[i]))
+        else:
+            try:
+                print("%s:%s, op:%s, gap:%s, close:%s, buy_rate:%s, sell_rate:%s"%(i, code_name[i], operate[i], gaps[i], close[i], buy_r[i], sell_r[i]))
+            except Exception as e:
+                print("%s:%s" % (i, 'None'))
 
 def save_trade_log_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}}, indent=4)
@@ -61,32 +67,32 @@ def grid_bs(codes, user):
     buy_rates = load_rates('buy')
     sell_rates = load_rates('sell')
     gaps = load_gaps()
-    print(gaps)
-    operate_prices=[]
+    # print(gaps)
+    operate_prices={}
     for c in codes:
-        operate_prices.append(float(load_trade_log_once(c)[c]['price']))
-    print(operate_prices)
-    buyer = Trader(user, codes[0], operate_prices[0], 100, 'b')
-    seller = Trader(user, codes[0], operate_prices[0], 100, 's')
+        operate_prices[c] = float(load_trade_log_once(c)[c]['price'])
+    # print(operate_prices)
+    buyer = Trader(user, codes[0], operate_prices[codes[0]], 100, 'b')
+    seller = Trader(user, codes[0], operate_prices[codes[0]], 100, 's')
     p = get_all_price(codes)
-    closes = [p[code]['close'] for code in codes]
-    print(closes)
+    closes = {code:p[code]['close'] for code in codes}
+    # print(closes)
+    code2name(codes, operate_prices, gaps, closes, buy_rates, sell_rates)
     while True:
         time.sleep(0.5)
         p = get_all_price(codes)
         count += 1
-        price_nows = [p[code]['now'] for code in codes]
-        closes = [p[code]['close'] for code in codes]
+        price_nows = {code : p[code]['now'] for code in codes}
         for i in range(len(codes)):
             try:
                 code = codes[i]
-                close = closes[i]
+                close = closes[code]
                 gap = gaps[code]
                 buy_rate = buy_rates[code]
                 sell_rate = sell_rates[code]
 
-                price_now = price_nows[i]
-                operate_price = operate_prices[i]
+                price_now = price_nows[code]
+                operate_price = operate_prices[code]
 
                 # if count % 3600 == 0:
                     # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
@@ -102,7 +108,7 @@ def grid_bs(codes, user):
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
                     print("Price  Now:%s, Operate_price:%s】" % (price_now, buy_price))
                     save_trade_log_once(code, buy_price, buy_amount)
-                    operate_prices[i] = buy_price
+                    operate_prices[code] = buy_price
                     time.sleep(0.2)
 
                 if price_now > operate_price + gap * sell_rate:
@@ -117,7 +123,7 @@ def grid_bs(codes, user):
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_trade_log_once(code, sell_price, sell_amount)
                     print("Price  Now:%s, Operate_price:%s" % (price_now, sell_price))
-                    operate_prices[i] = sell_price
+                    operate_prices[code] = sell_price
                     time.sleep(0.2)
             except KeyError as e:
                 print(e)

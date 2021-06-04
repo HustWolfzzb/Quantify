@@ -72,14 +72,13 @@ def get_Account():
 
 if __name__ == '__main__':
     # codes = ['510050', '588000', '601666', '600900', '002044', '000725', '600031']
-    codes = ['510050', '002283', '002456', '002135', '600900', '002044', '000725', '600031', '601607', '603126', '002456']
-    code2name(codes)
+    codes = ['510050', '588000','002283', '002456', '002135', '600900', '002044', '000725', '601607', '002456']
+    # code2name(codes)
     # data = user.position
     # for k,v in data.items():
     #     print(k, v)
     # grid_bs(['513550', '002044','000725','600031'], user)
     # grid_bs(['600900', '600036', '510050', '002044','000725','600031'], user)
-    timeReady = False
     while len(codes) > 0:
         # if int(datetime.datetime.now().strftime('%H')) < 9 or datetime.datetime.now().strftime('%M') < '29':
         #         print("\rWait!%s")
