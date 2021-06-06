@@ -470,6 +470,7 @@ def get_Graph():
     config = Config('neo4j').getInfo()
     return Graph(config['url2'],auth=(config['name'], config['password']))
 
+
 if __name__ == '__main__':
     graph = get_Graph()
     # createNode_1(graph, 'graph_data/holders_stock.csv')
