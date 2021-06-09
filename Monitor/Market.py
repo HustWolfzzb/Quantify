@@ -100,8 +100,6 @@ def all_base():
     df.set_index(["ts_code"], inplace=True)
     # 去重
     df = df.loc[~df.index.duplicated(keep='first')].copy()
-
-
     for name in ['industry', 'concept', 'area']:
         if name == 'industry':
             stock_name = stock_industry
@@ -215,26 +213,29 @@ def all_stock():
     stocks = get_pro_stock_basic()['ts_code'].tolist()
     new_stocks = []
     for idx in stocks:
-        if idx[0]==3 or idx[:3] == '688':
+        if idx[0]=='3' or idx[:3] == '688':
             continue
         else:
             new_stocks.append(idx)
     stocks = new_stocks
-    today, ago = get_Date_base_gap(0, 200)
+    today, ago = get_Date_base_gap(0, 365)
     count = 0
     length = len(stocks)
     # length = 100
     existStock = os.listdir('stock')
     stock_data = {}
+    ok_stock = []
     while count < length:
         index = count
-        if index % 100 == 0:
+        if index % 10 == 0:
             print("\r【%s%s/%s%s】" % ('>' * int(index * 100 // length), index , length, '=' * (100 - int(index * 100 // length))), end='')
         code = stocks[index]
         try:
             if code+'.csv' not in existStock:
-                df,_ = process_data(code, ago, today)
-                if len(df) == 0:
+                count += 1
+                continue
+                df,_ = process_data(code, ago, today, ma=[5,10,20], need_col=['open','close','high','low', 'ma5','ma10','ma20'])
+                if len(df) < 200:
                     count += 1
                     continue
                 df.to_csv('stock/%s.csv' % code, index=False)
@@ -247,18 +248,117 @@ def all_stock():
                 count += 1
                 continue
             stock_data[code] = df
+            ok_stock.append(code)
             count += 1
         except Exception as e:
-            if str(e).find('not enough values to unpack') != -1:
+            if str(e).find('not enough values to unpack') != -1 or str(e).find('object is not subscriptable') != -1 :
                 print(e)
+                count += 1
                 continue
             else:
                 print(e)
                 time.sleep(61)
+    return stock_data, ok_stock
 
+
+def get_best_stcok(ss=0):
+    stock_name = get_stock_name()
+    print("\n")
+    stock_data, ok_stock = all_stock()
+    gap= 20
+    for code in ok_stock:
+        data = stock_data[code]
+        length = len(data)
+        target = length - ss
+        close = data.loc[target - gap:target, 'close'].tolist()
+        open = data.loc[target - gap:target, 'open'].tolist()
+        ma10 = data.loc[target - gap:target, 'ma10'].tolist()
+        ma5 = data.loc[target - gap:target, 'ma5'].tolist()
+        # if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
+        #     continue
+        up = 0
+        down = 0
+        sumDay = len(ma10)
+        name = stock_name[code]
+        # if name.lower().find('st') != -1:
+        #     continue
+        for i in range(sumDay):
+            if close[i] < ma10[i] or open[i] < ma10[i]:
+                down += 1
+            else:
+                up += 1
+        if down < sumDay * 0.1:
+            if ss > 0:
+                print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s" % (code, name, up, down, close[-1], data.loc[target, 'close']))
+            else:
+                print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s" % (code, name, up, down, close[-1]))
+        # elif down < sumDay * 0.2:
+        #     if ss > 0:
+        #         print("80per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s" % (
+        #         code, name, up, down, close[-1], data.loc[target, 'close']))
+        #     else:
+        #         print("80per > ma10 【%s:%s】，上：%s, 下:%s, close:%s" % (code, name, up, down, close[-1]))
+
+
+def test():
+    stock_name = get_stock_name()
+    stock_data, ok_stock = all_stock()
+    length = len(stock_data['000001.SZ'])
+    earn80 = 1000000
+    earn90 = 1000000
+    keep = 5
+    gap = 30
+    for target in range(gap + 20, length-keep, keep):
+        for code in ok_stock:
+            data = stock_data[code]
+            close = data.loc[target - gap:target, 'close'].tolist()
+            open = data.loc[target - gap:target, 'open'].tolist()
+            ma10 = data.loc[target - gap:target, 'ma5'].tolist()
+            ma5 = data.loc[target - gap:target, 'ma5'].tolist()
+            if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
+                continue
+            up = 0
+            down = 0
+            sumDay = len(ma10)
+            name = stock_name[code]
+            for i in range(sumDay):
+                if close[i] < ma10[i] or open[i] < ma10[i]:
+                    down += 1
+                else:
+                    up += 1
+            if down < sumDay * 0.1:
+                # print("\n90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, sell_price:%s" % (code, name, up, down, close[-1], data.loc[target+1, 'close']))
+                if close[-1]>100:
+                    earn90 += (data.loc[target + keep, 'close'] - close[-1] )*100
+                else:
+                    amount = int( 10000 / ( close[-1]*100) ) * 100
+                    earn90 += (data.loc[target + keep, 'close'] - close[-1] )*amount
+            elif down < sumDay * 0.2:
+                # print("80per > ma10【%s:%s】，上：%s, 下:%s" % (code, name, up, down))
+                if close[-1]>100:
+                    earn80 += (data.loc[target + keep, 'close'] - close[-1] )*100
+                else:
+                    amount = int( 10000 / ( close[-1]*100) ) * 100
+                    earn80 += (data.loc[target + keep, 'close'] - close[-1] )*amount
+    print("\nper80初始资金100w，现在:%s\nper90初始资金100w，现在:%s" % (round(earn80), round(earn90)))
+
+
+def summary_up_rules():
+    stock_name = get_stock_name()
+    stock_data, ok_stock = all_stock()
+    length = len(stock_data['000001.SZ'])
+    keep = 5
+    gap = 30
+    for target in range(gap + 20, length - keep, keep):
+        for code in ok_stock:
+            data = stock_data[code]
+            close = data.loc[target - gap:target, 'close'].tolist()
+            open = data.loc[target - gap:target, 'open'].tolist()
+            ma10 = data.loc[target - gap:target, 'ma5'].tolist()
+            ma5 = data.loc[target - gap:target, 'ma5'].tolist()
 
 
 if __name__ == '__main__':
-    all_stock()
+    get_best_stcok(1)
 
 

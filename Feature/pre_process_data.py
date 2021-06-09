@@ -10,6 +10,15 @@ def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101'
         ts.set_token('ca90866f7926f04be67572bc79b935fea5191a78abf7194ebd294644')
     data = ts.pro_bar(ts_code=ts_code, start_date=start_date, end_date=end_date, ma=ma, adj=adj)
     data = data[::-1].reset_index()
+    cal = False
+    for col in need_col:
+        if col in data.columns:
+            continue
+        else:
+            cal = True
+    if not cal:
+        # data.set_index(['trade_date'], inplace=True)
+        return data[need_col],0
     if len(data)<49:
         return []
     data['delta_ma5'] = (data['close'] - data['ma5'] ) / data['close']
@@ -33,7 +42,7 @@ def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101'
            'delta_ma50', 'delta_ma_v_5', 'delta_ma_v_20', 'delta_ma_v_50',
            'RSI-7', 'RSI-21', 'RSI-49', 'vol_chg', 'mo5', 'mo15', 'mo30']
     if type!='C':
-        need_col.append('close')
+        need_col = list(set(need_col.append('close')))
     for i in range(len(data)):
         for j in [7,21,49]:
             data.loc[i,'RSI-{}'.format(j)] = RSI(data, 'change', i, j)
