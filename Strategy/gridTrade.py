@@ -102,7 +102,12 @@ def grid_bs(codes, user):
                         buy_amount = buy_amount_base * int(abs_reduce(price_now, close) // (gap * 6) + 1)
                     else:
                         buy_price = round(operate_price - gap, 3)
-                        buy_amount = buy_amount_base
+                        if buy_price < close * 0.99:
+                            buy_amount = buy_amount_base + 100
+                        elif buy_price < close * 0.975:
+                            buy_amount = buy_amount_base + 200
+                        elif buy_price < close * 0.96:
+                            buy_amount = buy_amount_base + 300
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
                     print("Price  Now:%s, Operate_price:%s】" % (price_now, buy_price))
                     save_trade_log_once(code, buy_price, buy_amount)
@@ -115,7 +120,12 @@ def grid_bs(codes, user):
                         sell_amount = sell_amount_base * int(abs_reduce(price_now, close) // (gap * 10) + 1)
                     else:
                         sell_price = round(operate_price + gap, 3)
-                        sell_amount = sell_amount_base
+                        if sell_price > close * 1.01:
+                            sell_amount = sell_amount_base + 100
+                        elif sell_price > close * 1.025:
+                            sell_amount = sell_amount_base + 200
+                        elif sell_price > close * 1.04:
+                            sell_amount = sell_amount_base + 300
                     # if code[:3] == '513':
                     #     sell_amount = 300
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')

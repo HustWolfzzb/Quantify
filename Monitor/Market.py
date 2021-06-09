@@ -102,7 +102,6 @@ def all_base():
     df = df.loc[~df.index.duplicated(keep='first')].copy()
 
 
-
     for name in ['industry', 'concept', 'area']:
         if name == 'industry':
             stock_name = stock_industry
@@ -251,6 +250,7 @@ def all_stock():
             count += 1
         except Exception as e:
             if str(e).find('not enough values to unpack') != -1:
+                print(e)
                 continue
             else:
                 print(e)

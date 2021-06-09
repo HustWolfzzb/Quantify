@@ -10,6 +10,9 @@
       <sshConfig authType="PASSWORD" host="222.20.94.69" id="7cc7dead-f92e-464a-9c0b-e937f1523e8c" port="50010" customName="node10" nameFormat="CUSTOM" />
       <sshConfig authType="PASSWORD" host="222.20.94.69" id="53c4d7bf-5ef4-4b82-a2a6-dbd3f8505196" port="50010" customName="node10" nameFormat="CUSTOM" />
       <sshConfig authType="PASSWORD" host="222.20.94.69" id="12cd9611-2159-41de-ab04-a0197975dc99" port="50010" customName="node10" nameFormat="CUSTOM" />
+      <sshConfig authType="PASSWORD" host="222.20.94.69" id="daa07d9a-7d76-476a-86aa-420ac809f34d" port="50010" customName="node10" nameFormat="CUSTOM" />
+      <sshConfig authType="PASSWORD" host="222.20.94.69" id="81380ff9-d77d-4277-b3af-6e3f9efd1395" port="50010" customName="node10" nameFormat="CUSTOM" />
+      <sshConfig authType="PASSWORD" host="222.20.94.69" id="a379be39-9997-4b34-8478-95fc7f258821" port="50010" customName="node10" nameFormat="CUSTOM" />
     </configs>
   </component>
 </project>
