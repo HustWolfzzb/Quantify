@@ -1,7 +1,7 @@
 import os
 import time
 from DataEngine.Data import pro, get_pro_stock_basic, get_concept, get_index_basic, \
-    get_stock_concepts, get_index_weight, get_index, get_stock_name
+    get_stock_concepts, get_index_weight, get_index, get_stock_name, get_daily_basic
 from Strategy.follow_fund import get_Date_base_gap
 from Feature.pre_process_data import process_data
 import matplotlib.pyplot as plt
@@ -261,18 +261,19 @@ def all_stock():
     return stock_data, ok_stock
 
 
-def get_best_stcok(ss=0):
+def get_best_stcok(stock_data, ok_stock, ss=0, ):
     stock_name = get_stock_name()
     print("\n")
-    stock_data, ok_stock = all_stock()
-    gap= 20
+    gap= 14
+    code_90 = []
+    code_80 = []
     for code in ok_stock:
         data = stock_data[code]
         length = len(data)
         target = length - ss
         close = data.loc[target - gap:target, 'close'].tolist()
         open = data.loc[target - gap:target, 'open'].tolist()
-        ma10 = data.loc[target - gap:target, 'ma10'].tolist()
+        ma10 = data.loc[target - gap:target, 'ma20'].tolist()
         ma5 = data.loc[target - gap:target, 'ma5'].tolist()
         # if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
         #     continue
@@ -292,17 +293,18 @@ def get_best_stcok(ss=0):
                 print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s" % (code, name, up, down, close[-1], data.loc[target, 'close']))
             else:
                 print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s" % (code, name, up, down, close[-1]))
+            code_90.append(code)
+
         # elif down < sumDay * 0.2:
         #     if ss > 0:
         #         print("80per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s" % (
         #         code, name, up, down, close[-1], data.loc[target, 'close']))
         #     else:
         #         print("80per > ma10 【%s:%s】，上：%s, 下:%s, close:%s" % (code, name, up, down, close[-1]))
-
+    return code_90
 
 def test():
     stock_name = get_stock_name()
-    stock_data, ok_stock = all_stock()
     length = len(stock_data['000001.SZ'])
     earn80 = 1000000
     earn90 = 1000000
@@ -313,7 +315,7 @@ def test():
             data = stock_data[code]
             close = data.loc[target - gap:target, 'close'].tolist()
             open = data.loc[target - gap:target, 'open'].tolist()
-            ma10 = data.loc[target - gap:target, 'ma5'].tolist()
+            ma10 = data.loc[target - gap:target, 'ma10'].tolist()
             ma5 = data.loc[target - gap:target, 'ma5'].tolist()
             if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
                 continue
@@ -333,6 +335,7 @@ def test():
                 else:
                     amount = int( 10000 / ( close[-1]*100) ) * 100
                     earn90 += (data.loc[target + keep, 'close'] - close[-1] )*amount
+
             elif down < sumDay * 0.2:
                 # print("80per > ma10【%s:%s】，上：%s, 下:%s" % (code, name, up, down))
                 if close[-1]>100:
@@ -345,7 +348,6 @@ def test():
 
 def summary_up_rules():
     stock_name = get_stock_name()
-    stock_data, ok_stock = all_stock()
     length = len(stock_data['000001.SZ'])
     keep = 5
     gap = 30
@@ -359,6 +361,23 @@ def summary_up_rules():
 
 
 if __name__ == '__main__':
-    get_best_stcok(1)
-
-
+    df = get_daily_basic('20210609')
+    df.set_index(['ts_code'], inplace=True)
+    # niceCode = get_best_stcok(0)
+    stock_name = get_stock_name()
+    # for code in niceCode:
+    #     if df.loc[code, 'total_mv'] > 1000000:
+    #         print("niceMount:%s"%stock_name[code])
+    #
+    niceCode={}
+    stock_data, ok_stock = all_stock()
+    for i in range(10):
+         c = get_best_stcok(stock_data, ok_stock,i)
+         for code in c:
+            if not niceCode.get(code):
+                niceCode[code] = 1
+            else:
+                niceCode[code] += 1
+    for i in niceCode.keys():
+        if df.loc[i,'total_mv'] > 2000000 and niceCode[i] > 5:
+            print("Name:%s Times:%s Vol:%s"%(stock_name[i], niceCode[i], df.loc[i,'total_mv']))

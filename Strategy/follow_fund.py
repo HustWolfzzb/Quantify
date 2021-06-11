@@ -15,6 +15,7 @@ def get_all_alive_fund(timegap):
     x = df[df['status'] == 'L']
     x = x[x['list_date'] < monthago]
     all_fund = x['ts_code'].tolist()
+    all_fund.append('515790.SH')
     return all_fund
 
 def get_Date_base_gap(timebase, timegap):
@@ -24,7 +25,7 @@ def get_Date_base_gap(timebase, timegap):
     monthAgo = monthAgo.strftime("%Y%m%d")
     return today, monthAgo
 
-all_etf = get_all_alive_fund(180)
+all_etf = get_all_alive_fund(40)
 fund_name = get_fund_name()
 
 
@@ -40,12 +41,14 @@ def get_sorted_etf_data(timebase=0, timegap=30):
                 time.sleep(60)
             try:
                 data = get_fund_daily(e, monthAgo, today)
-            except OSError as e:
+            except OSError as x:
                 time.sleep(61)
                 data = get_fund_daily(e, monthAgo, today)
             data.to_csv('etf_cache/%s.txt'%e, index=False)
+            print("存储了新的ETF：%s"%fund_name[e])
             count += 1
         else:
+            print("读取了ETF：%s" % fund_name[e])
             data = pd.read_csv('etf_cache/%s.txt'%e)
         try:
             if type(data.loc[0,'trade_date']) == str:
@@ -58,7 +61,7 @@ def get_sorted_etf_data(timebase=0, timegap=30):
             continue
         try:
             price_change = (data.iloc[0,:]['close'] - data.iloc[-1,:]['close']) / data.iloc[-1,:]['close']
-            if data.iloc[0,:]['amount']<10000 or data.iloc[0,:]['close']>10:
+            if data.iloc[0,:]['vol']<100000 or data.iloc[0,:]['close']>10:
                 etf2data[e] = -1
             else:
                 etf2data[e] = price_change
@@ -66,6 +69,57 @@ def get_sorted_etf_data(timebase=0, timegap=30):
             pass
     d_order = sorted(etf2data.items(), key=lambda x: x[1], reverse=True)
     return d_order
+
+
+def get_best_etf(timebase=0, timegap=30):
+    today, monthAgo = get_Date_base_gap(timebase, timegap)
+    etf2data = {}
+    count = 0
+    existETF = os.listdir('etf_cache')
+    for e in all_etf:
+        if e + '.txt' not in existETF:
+            if (count + 1) % 79 == 0:
+                print("\rProgress:%s / %s" % (len(etf2data), len(all_etf)), end='...')
+                time.sleep(60)
+            try:
+                data = get_fund_daily(e, monthAgo, today)
+            except OSError as x:
+                print(x)
+                time.sleep(61)
+                data = get_fund_daily(e, monthAgo, today)
+            data.to_csv('etf_cache/%s.txt' % e, index=False)
+            count += 1
+        else:
+            data = pd.read_csv('etf_cache/%s.txt' % e)
+        try:
+            if data.iloc[0, :]['vol'] < 100000 or data.iloc[0, :]['close'] > 10:
+                continue
+        except Exception as e:
+            continue
+        try:
+            if str(today) not in [str(x) for x in data['trade_date']]:
+                continue
+            if type(data.loc[0, 'trade_date']) == str:
+                data = data[data['trade_date'] <= today]
+                data = data[data['trade_date'] >= monthAgo]
+            else:
+                data = data[data['trade_date'] <= int(today)]
+                data = data[data['trade_date'] >= int(monthAgo)]
+        except Exception as e:
+            continue
+        if data.iloc[0, :]['close'] > data.iloc[0, :]['ma20'] \
+                and data.iloc[0, :]['open'] <= data.iloc[0, :]['ma20'] : #"\
+                # and  data.iloc[1, :]['ma20'] > data.iloc[0, :]['ma20'] :
+            print("%s, %s - %s突破20日线，可关注当天收盘：%s"
+                  %(data.iloc[0, :]['trade_date'], fund_name[e],e,
+                    data.iloc[0, :]['close']))
+        if data.iloc[0, :]['close'] < data.iloc[0, :]['ma20'] \
+                and data.iloc[0, :]['open'] >= data.iloc[0, :]['ma20'] : #"\
+                # and  data.iloc[1, :]['ma20'] > data.iloc[0, :]['ma20'] :
+            print("%s, 【回踩！】%s - %s突破20日线，可关注当天收盘：%s"
+                  %(data.iloc[0, :]['trade_date'], fund_name[e],e,
+                    data.iloc[0, :]['close']))
+
 
 def buy_topK(timebase = 0, timeOld = 7,  timegap = 30, K = 10):
     df =  get_sorted_etf_data(timeOld, timegap)
@@ -122,22 +176,26 @@ if __name__ == '__main__':
     #         # time.sleep(6)
     #     print("======")
     # fund_name = get_fund_name()
-    # get_sorted_etf_data(0, 180)
+    get_sorted_etf_data(0, 180)
     # for x in range(10):
     #     df = get_sorted_etf_data(x * 7, 28)
     #     for i in df[:10]:
     #         print(fund_name[i[0]], round(i[1], 3), end=' | ')
     #     print("\n================================================================")
-    change = []
-    for i in range(15):
-        # for j in range(3):
-            # for k in [5,10,15,20]:
-        j = 1
-        k = 10
-        # time.sleep(6)
-        print("\n\nTIMEBASE:%s, GAP:%s, K:%s"%(i*7, (j+1)*7, k))
-        change.append(buy_topK(i*7, i*7 + 7, (j+1)*7, k))
-    start = 10000
-    for i in range(len(change)):
-        start = start * (1+change[len(change) - i - 1])
-        print("一周资金：", start)
+    for i in range(100,0,-1):
+        get_best_etf(timebase=i, timegap=30)
+        print("======\n")
+    # change = []
+    # s = get_sorted_etf_data(0, 180)
+    # for i in range(15):
+    #     # for j in range(3):
+    #         # for k in [5,10,15,20]:
+    #     j = 1
+    #     k = 10
+    #     # time.sleep(6)
+    #     print("\n\nTIMEBASE:%s, GAP:%s, K:%s"%(i*7, (j+1)*7, k))
+    #     change.append(buy_topK(i*7, i*7 + 7, (j+1)*7, k))
+    # start = 10000
+    # for i in range(len(change)):
+    #     start = start * (1+change[len(change) - i - 1])
+    #     print("一周资金：", start)

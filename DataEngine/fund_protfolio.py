@@ -98,7 +98,7 @@ def get_inverst_postion(code: str, date=None) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # 6 位基金代码
-    code = '161725'
+    code = '510050'
     # 创建 excel 文件
     # 获取基金公开持仓日期
     public_dates = get_public_dates(code)
