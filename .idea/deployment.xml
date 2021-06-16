@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" showAutoUploadSettingsWarning="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="root@158.51.127.134:22" showAutoUploadSettingsWarning="false">
     <serverData>
       <paths name="node10">
         <serverdata>
           <mappings>
             <mapping deploy="/Quantify" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@158.51.127.134:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/Quantify" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

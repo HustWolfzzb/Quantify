@@ -195,7 +195,7 @@ def get_fund_daily(ts_code='150018.SZ', start_date='20180101', end_date='2018102
     return ts.pro_bar(ts_code=ts_code,  asset = 'FD', ma=ma, start_date=start_date, end_date=end_date)
 
 def get_stock_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029'):
-    return ts.pro_bar(ts_code=ts_code,  asset = 'E', start_date=start_date, end_date=end_date, adj='qfq')
+    return ts.pro_bar(ts_code=ts_code,  asset = 'E', start_date=start_date, end_date=end_date, adj='qfq',  ma=[5,10,20,50])
 
 
 if __name__ == '__main__':

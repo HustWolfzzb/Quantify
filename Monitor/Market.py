@@ -1,7 +1,8 @@
 import os
 import time
 from DataEngine.Data import pro, get_pro_stock_basic, get_concept, get_index_basic, \
-    get_stock_concepts, get_index_weight, get_index, get_stock_name, get_daily_basic
+    get_stock_concepts, get_index_weight, get_index, get_stock_name, get_daily_basic,\
+    get_stock_daily, qo
 from Strategy.follow_fund import get_Date_base_gap
 from Feature.pre_process_data import process_data
 import matplotlib.pyplot as plt
@@ -222,26 +223,29 @@ def all_stock():
     count = 0
     length = len(stocks)
     # length = 100
+    if not os.path.exists('stock'):
+        os.makedirs('stock')
     existStock = os.listdir('stock')
     stock_data = {}
     ok_stock = []
     while count < length:
         index = count
         if index % 10 == 0:
-            print("\r【%s%s/%s%s】" % ('>' * int(index * 100 // length), index , length, '=' * (100 - int(index * 100 // length))), end='')
+            print("\r【%s%s/%s%s】" % ('>' * int(index * 20 // length), index , length, '=' * (20 - int(index * 20 // length))), end='')
         code = stocks[index]
         try:
             if code+'.csv' not in existStock:
-                count += 1
-                continue
-                df,_ = process_data(code, ago, today, ma=[5,10,20], need_col=['open','close','high','low', 'ma5','ma10','ma20'])
-                if len(df) < 200:
+                # count += 1
+                # continue
+                df = get_stock_daily(ts_code=code, start_date=ago, end_date=today)
+                if len(df) < 80:
                     count += 1
                     continue
                 df.to_csv('stock/%s.csv' % code, index=False)
                 # print( code+'.csv' +" not in stock!")
             else:
                 df = pd.read_csv('stock/%s.csv'%code)
+                # count += 1
                 # print( code+'.csv' +" in stock!")
             if len(df)<10:
                 print( code+'.csv' +" not long enough!")
@@ -251,7 +255,9 @@ def all_stock():
             ok_stock.append(code)
             count += 1
         except Exception as e:
-            if str(e).find('not enough values to unpack') != -1 or str(e).find('object is not subscriptable') != -1 :
+            if str(e).find('not enough values to unpack') != -1 \
+                    or str(e).find('object is not subscriptable') != -1 \
+                    or str(e).find("object of type 'NoneType' has no len()") != -1:
                 print(e)
                 count += 1
                 continue
@@ -261,38 +267,37 @@ def all_stock():
     return stock_data, ok_stock
 
 
-def get_best_stcok(stock_data, ok_stock, ss=0, ):
+def get_best_stcok(stock_data, ok_stock, ss=0, gap= 30):
     stock_name = get_stock_name()
     print("\n")
-    gap= 14
     code_90 = []
     code_80 = []
-    for code in ok_stock:
+    for code in ok_stock[:100]:
         data = stock_data[code]
         length = len(data)
         target = length - ss
-        close = data.loc[target - gap:target, 'close'].tolist()
-        open = data.loc[target - gap:target, 'open'].tolist()
-        ma10 = data.loc[target - gap:target, 'ma20'].tolist()
-        ma5 = data.loc[target - gap:target, 'ma5'].tolist()
+        close = data.loc[0:gap, 'close'].tolist()
+        open = data.loc[0:gap, 'open'].tolist()
+        ma = data.loc[0:gap, 'ma20'].tolist()
+        # ma5 = data.loc[target - gap:target, 'ma5'].tolist()
         # if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
         #     continue
         up = 0
         down = 0
-        sumDay = len(ma10)
+        sumDay = len(ma)
         name = stock_name[code]
         # if name.lower().find('st') != -1:
         #     continue
         for i in range(sumDay):
-            if close[i] < ma10[i] or open[i] < ma10[i]:
+            if close[i] < ma[i] or open[i] < ma[i]:
                 down += 1
             else:
                 up += 1
         if down < sumDay * 0.1:
             if ss > 0:
-                print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s" % (code, name, up, down, close[-1], data.loc[target, 'close']))
+                print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s" % (code, name, up, down, close[0], data.loc[target, 'close']))
             else:
-                print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s" % (code, name, up, down, close[-1]))
+                print("90per > ma10 【%s:%s】，上：%s, 下:%s, close:%s" % (code, name, up, down, close[0]))
             code_90.append(code)
 
         # elif down < sumDay * 0.2:
@@ -360,6 +365,40 @@ def summary_up_rules():
             ma5 = data.loc[target - gap:target, 'ma5'].tolist()
 
 
+
+def real_time_stock():
+    existStock = [x[:9] for x in os.listdir('stock') if x[0]!='3' or x[:3]!='688']
+    datas = {}
+    for e in existStock:
+        code = e
+        data = pd.read_csv('stock/%s.csv' % e)
+        try:
+            newestData = data.iloc[0, :]
+            newestData['ma20'] = round((data.loc[0, 'ma20'] * 20 - data.loc[19, 'close'])/19, 4)
+            datas[code] = newestData
+        except Exception as x:
+            continue
+    breaks = []
+    while True:
+        price_nows = qo.stocks([i[:6] for i in existStock])
+        for e in datas.keys():
+            code = e
+            price_now = price_nows[e[:6]]['now']
+            price_open = price_nows[e[:6]]['open']
+            pre_close = price_nows[e[:6]]['close']
+            data = datas[code]
+            ma20 = (price_now + data['ma20'] * 19) / 20
+            if (price_open < ma20 and price_now >= ma20)\
+                    or (pre_close < ma20 and price_now >= ma20) :
+                s = "%s - %s突破20日线，可关注, 昨收[%s] 开盘[%s]  现价[%s] MA20[%s]\n" % ( stock_name[e], e,
+                         pre_close, price_open, price_now, round(ma20, 3))
+                if s not in breaks:
+                    breaks.append(s)
+                    print(s)
+        # print("\r %s"%lines, end='')
+        time.sleep(10)
+
+
 if __name__ == '__main__':
     df = get_daily_basic('20210609')
     df.set_index(['ts_code'], inplace=True)
@@ -369,15 +408,20 @@ if __name__ == '__main__':
     #     if df.loc[code, 'total_mv'] > 1000000:
     #         print("niceMount:%s"%stock_name[code])
     #
+    # real_time_stock()
+
     niceCode={}
     stock_data, ok_stock = all_stock()
-    for i in range(10):
-         c = get_best_stcok(stock_data, ok_stock,i)
+    for i in range(1):
+         c = get_best_stcok(stock_data, ok_stock, i, 20)
          for code in c:
             if not niceCode.get(code):
                 niceCode[code] = 1
             else:
                 niceCode[code] += 1
     for i in niceCode.keys():
-        if df.loc[i,'total_mv'] > 2000000 and niceCode[i] > 5:
-            print("Name:%s Times:%s Vol:%s"%(stock_name[i], niceCode[i], df.loc[i,'total_mv']))
+        try:
+            if df.loc[i,'total_mv'] > 1000000 and niceCode[i] > 5:
+                print("Name:%s Times:%s Vol:%s"%(stock_name[i], niceCode[i], df.loc[i,'total_mv']))
+        except KeyError as x:
+            print(x)

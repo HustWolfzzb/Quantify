@@ -1,6 +1,7 @@
 import os
-
-from DataEngine.Data import get_fund_basic, get_fund_daily, get_fund_name
+import sys
+sys.path.append('../')
+from DataEngine.Data import get_fund_basic, get_fund_daily, get_fund_name, qo
 import time
 import datetime
 import pandas as pd
@@ -15,7 +16,7 @@ def get_all_alive_fund(timegap):
     x = df[df['status'] == 'L']
     x = x[x['list_date'] < monthago]
     all_fund = x['ts_code'].tolist()
-    all_fund.append('515790.SH')
+    all_fund.append('516020.SH')
     return all_fund
 
 def get_Date_base_gap(timebase, timegap):
@@ -25,7 +26,7 @@ def get_Date_base_gap(timebase, timegap):
     monthAgo = monthAgo.strftime("%Y%m%d")
     return today, monthAgo
 
-all_etf = get_all_alive_fund(40)
+all_etf = get_all_alive_fund(10)
 fund_name = get_fund_name()
 
 
@@ -33,23 +34,25 @@ def get_sorted_etf_data(timebase=0, timegap=30):
     today, monthAgo = get_Date_base_gap(timebase, timegap)
     etf2data = {}
     count = 0
+    if not os.path.exists('etf_cache'):
+        os.makedirs('etf_cache')
     existETF = os.listdir('etf_cache')
     for e in all_etf:
-        if e+'.txt' not in existETF:
+        if e+'.csv' not in existETF:
             if (count + 1) % 79 == 0:
-                print("\rProgress:%s / %s" % (len(etf2data), len(all_etf)), end='...')
+                print("\rProgress:%s / %s" % (len(etf2data), len(all_etf)), end='...', flush=True)
                 time.sleep(60)
             try:
                 data = get_fund_daily(e, monthAgo, today)
             except OSError as x:
                 time.sleep(61)
                 data = get_fund_daily(e, monthAgo, today)
-            data.to_csv('etf_cache/%s.txt'%e, index=False)
-            print("存储了新的ETF：%s"%fund_name[e])
+            data.to_csv('etf_cache/%s.csv'%e, index=False)
+            print("【%s】存储了新的ETF：%s %s"%(count, fund_name[e],e))
             count += 1
         else:
-            print("读取了ETF：%s" % fund_name[e])
-            data = pd.read_csv('etf_cache/%s.txt'%e)
+            # print("读取了ETF：%s" % fund_name[e])
+            data = pd.read_csv('etf_cache/%s.csv'%e)
         try:
             if type(data.loc[0,'trade_date']) == str:
                 data = data[data['trade_date'] <= today]
@@ -72,12 +75,12 @@ def get_sorted_etf_data(timebase=0, timegap=30):
 
 
 def get_best_etf(timebase=0, timegap=30):
-    today, monthAgo = get_Date_base_gap(timebase, timegap)
     etf2data = {}
     count = 0
     existETF = os.listdir('etf_cache')
     for e in all_etf:
-        if e + '.txt' not in existETF:
+        if e + '.csv' not in existETF:
+            today, monthAgo = get_Date_base_gap(0, 3650)
             if (count + 1) % 79 == 0:
                 print("\rProgress:%s / %s" % (len(etf2data), len(all_etf)), end='...')
                 time.sleep(60)
@@ -87,12 +90,14 @@ def get_best_etf(timebase=0, timegap=30):
                 print(x)
                 time.sleep(61)
                 data = get_fund_daily(e, monthAgo, today)
-            data.to_csv('etf_cache/%s.txt' % e, index=False)
+            data.to_csv('etf_cache/%s.csv' % e, index=False)
             count += 1
         else:
-            data = pd.read_csv('etf_cache/%s.txt' % e)
+            data = pd.read_csv('etf_cache/%s.csv' % e)
+        today, monthAgo = get_Date_base_gap(timebase, timegap)
         try:
-            if data.iloc[0, :]['vol'] < 100000 or data.iloc[0, :]['close'] > 10:
+            if data.iloc[0, :]['amount'] < 100 or \
+                    data.iloc[0, :]['close'] > 10 or data.iloc[0, :]['close'] < 0.5:
                 continue
         except Exception as e:
             continue
@@ -120,6 +125,48 @@ def get_best_etf(timebase=0, timegap=30):
                   %(data.iloc[0, :]['trade_date'], fund_name[e],e,
                     data.iloc[0, :]['close']))
 
+
+
+def real_time_etf():
+    existETF = os.listdir('etf_cache')
+    datas = {}
+    for e in all_etf:
+        code = e
+        data = pd.read_csv('etf_cache/%s.csv' % e)
+        try:
+            if data.iloc[0, :]['vol'] < 100000 or data.iloc[0, :]['close'] > 10:
+                continue
+        except Exception as x:
+            continue
+        try:
+            newestData = data.iloc[0, :]
+            newestData['ma20'] = round((data.loc[0, 'ma20'] * 20 - data.loc[19, 'close'])/19, 4)
+            datas[code] = newestData
+        except Exception as x:
+            continue
+    breaks = []
+    while True:
+        price_nows = qo.stocks([i[:6] for i in existETF])
+        for e in datas.keys():
+            code = e
+            price_now = price_nows[e[:6]]['now']
+            price_open = price_nows[e[:6]]['open']
+            pre_close = price_nows[e[:6]]['close']
+            data = datas[code]
+            ma20 = (price_now + data['ma20'] * 19) / 20
+            if (price_open < ma20 and price_now >= ma20) or (pre_close < ma20 and price_now >= ma20) :
+                s="%s - %s突破20日线，可关注, 昨收[%s] 开盘[%s]  现价[%s] MA20[%s]\n" % ( fund_name[e], e,
+                         pre_close, price_open, price_now, round(ma20, 3))
+                if s not in breaks:
+                    breaks.append(s)
+                    print(s)
+        # print("\r %s"%lines, end='')
+        time.sleep(10)
+
+def fulsh_output(string):
+    sys.stdout.write('\r' + str(string) )
+    sys.stdout.flush()
+    time.sleep(1)
 
 def buy_topK(timebase = 0, timeOld = 7,  timegap = 30, K = 10):
     df =  get_sorted_etf_data(timeOld, timegap)
@@ -149,7 +196,7 @@ def buy_topK(timebase = 0, timeOld = 7,  timegap = 30, K = 10):
     existETF = os.listdir('etf_cache')
 
     for i in range(len(codes)):
-        if codes[i] + '.txt' not in existETF:
+        if codes[i] + '.csv' not in existETF:
             if (count + 1) % 79 == 0:
                 print("\rProgress:%s / %s" % (len(codes), len(all_etf)), end='...')
                 time.sleep(60)
@@ -158,7 +205,7 @@ def buy_topK(timebase = 0, timeOld = 7,  timegap = 30, K = 10):
             data = get_fund_daily(codes[i], monthAgo, today)
             count += 1
         else:
-            data = pd.read_csv('etf_cache/%s.txt' % codes[i])
+            data = pd.read_csv('etf_cache/%s.csv' % codes[i])
         data = data[data['trade_date'] <= int(today)]
         data = data[data['trade_date'] >= int(monthAgo)]
         price_change = (data.iloc[0, :]['close'] - data.iloc[-1, :]['close']) / data.iloc[-1, :]['close']
@@ -176,15 +223,17 @@ if __name__ == '__main__':
     #         # time.sleep(6)
     #     print("======")
     # fund_name = get_fund_name()
-    get_sorted_etf_data(0, 180)
+    get_sorted_etf_data(0, 3650)
+
     # for x in range(10):
     #     df = get_sorted_etf_data(x * 7, 28)
     #     for i in df[:10]:
     #         print(fund_name[i[0]], round(i[1], 3), end=' | ')
     #     print("\n================================================================")
-    for i in range(100,0,-1):
-        get_best_etf(timebase=i, timegap=30)
-        print("======\n")
+    #
+    # for i in range(100,0,-1):
+    #     get_best_etf(timebase=i, timegap=30)
+    #     print("======\n")
     # change = []
     # s = get_sorted_etf_data(0, 180)
     # for i in range(15):
@@ -199,3 +248,4 @@ if __name__ == '__main__':
     # for i in range(len(change)):
     #     start = start * (1+change[len(change) - i - 1])
     #     print("一周资金：", start)
+    real_time_etf()
