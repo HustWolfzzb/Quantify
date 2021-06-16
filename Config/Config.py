@@ -8,7 +8,9 @@ def getFileAbsolutePath(nowDir):
     elif sys.platform == 'darwin':
         return "/Users/zhangzhaobo/PycharmProjects/Quantify/Config/info.json"
     else:
-        return os.path.join(os.getcwd(), 'Config\info.json')
+        path = os.path.join(os.getcwd(), 'Config\info.json')
+        npath = path[:path.find('Quantify') + 9] + path[path.find('Config'):]
+        return npath
 
 def get_BASE_DIR():
     d = os.getcwd()
