@@ -23,6 +23,25 @@ def code2name(codes, operate={}, gaps={}, close={}, buy_r={}, sell_r = {}):
             except Exception as e:
                 print("%s:%s" % (i, 'None'))
 
+def BeijingTime(format = '%H:%M:%S'):
+    from datetime import datetime
+    from datetime import timedelta
+    from datetime import timezone
+
+    SHA_TZ = timezone(
+        timedelta(hours=8),
+        name='Asia/Shanghai',
+    )
+
+    # 协调世界时
+    utc_now = datetime.utcnow().replace(tzinfo=timezone.utc)
+    print(utc_now, utc_now.tzname())
+    print(utc_now.date(), utc_now.tzname())
+
+    # 北京时间
+    beijing_now = utc_now.astimezone(SHA_TZ)
+    return beijing_now.strftime(format)
+
 def save_trade_log_once(code, price, amount):
     string = json.dumps({code:{'price':price, 'amount':amount}}, indent=4)
     with open('cache/%s-log.txt'%code, 'w', encoding='utf8') as log:
@@ -112,7 +131,7 @@ def grid_bs(codes, user):
                         elif price_now < close * 0.96:
                             buy_amount = buy_amount_base + 300
                     buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
-                    print("[%s] Price  Now:%s, Operate_price:%s】" % (datetime.datetime.utcnow().strftime('%H:%M%S'), price_now, buy_price))
+                    print("[%s] Price  Now:%s, Operate_price:%s】" % (BeijingTime('%H:%M%S'), price_now, buy_price))
                     save_trade_log_once(code, buy_price, buy_amount)
                     operate_prices[code] = buy_price
                     time.sleep(0.2)
@@ -134,7 +153,7 @@ def grid_bs(codes, user):
                     #     sell_amount = 300
                     sell_id = seller.trade(code, sell_price, sell_amount, 's')
                     save_trade_log_once(code, sell_price, sell_amount)
-                    print("[%s] Price  Now:%s, Operate_price:%s】" % (datetime.datetime.utcnow().strftime('%H:%M%S'), price_now, sell_price))
+                    print("[%s] Price  Now:%s, Operate_price:%s】" % (BeijingTime('%H:%M%S'), price_now, sell_price))
                     operate_prices[code] = sell_price
                     time.sleep(0.2)
             except KeyError as e:
