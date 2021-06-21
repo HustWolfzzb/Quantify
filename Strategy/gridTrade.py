@@ -5,11 +5,27 @@ from DataEngine.Data import get_qo, get_stock_name, get_fund_name
 from Trade.Operation import Trader
 import time
 
-code_name = {k[:6]:v for k,v in get_stock_name().items()}
-fund_name = {k[:6]:v for k,v in get_fund_name().items()}
-for i in fund_name.keys():
-    code_name[i] = fund_name[i]
-
+try:
+    code_name = {k[:6]:v for k,v in get_stock_name().items()}
+    fund_name = {k[:6]:v for k,v in get_fund_name().items()}
+    for i in fund_name.keys():
+        code_name[i] = fund_name[i]
+except Exception as e:
+    code_name={
+        '000725': '京东方',
+        '510050': '上证50',
+        '588000': '科创50',
+        '600415': '小商品城',
+        '002044':'美年健康',
+        '510050': '上证50',
+        '588000': '科创50',
+        '512690': '酒etf',
+    }
+    fund_name={
+        '510050': '上证50',
+        '588000': '科创50',
+        '512690': '酒etf',
+    }
 fund_codes= [x[:6] for x in fund_name.keys()]
 
 def code2name(codes, operate={}, gaps={}, close={}, buy_r={}, sell_r = {}):
@@ -35,8 +51,8 @@ def BeijingTime(format = '%H:%M:%S'):
 
     # 协调世界时
     utc_now = datetime.utcnow().replace(tzinfo=timezone.utc)
-    print(utc_now, utc_now.tzname())
-    print(utc_now.date(), utc_now.tzname())
+    # print(utc_now, utc_now.tzname())
+    # print(utc_now.date(), utc_now.tzname())
 
     # 北京时间
     beijing_now = utc_now.astimezone(SHA_TZ)
@@ -105,7 +121,8 @@ def grid_bs(codes, user):
         count += 1
         price_nows = {code : p[code]['now'] for code in codes}
         for i in range(len(codes)):
-            try:
+            # try:
+            if i > -1:
                 code = codes[i]
                 close = closes[code]
                 gap = gaps[code]
@@ -130,7 +147,7 @@ def grid_bs(codes, user):
                             buy_amount = buy_amount_base + 200
                         elif price_now < close * 0.96:
                             buy_amount = buy_amount_base + 300
-                    buy_id = buyer.trade(code, buy_price, buy_amount, 'b')
+                    buy_id = buyer.trade(code, buy_price, buy_amount, 'b', code_name)
                     print("[%s] Price  Now:%s, Operate_price:%s】" % (BeijingTime('%H:%M%S'), price_now, buy_price))
                     save_trade_log_once(code, buy_price, buy_amount)
                     operate_prices[code] = buy_price
@@ -151,15 +168,17 @@ def grid_bs(codes, user):
                             sell_amount = sell_amount_base + 300
                     # if code[:3] == '513':
                     #     sell_amount = 300
-                    sell_id = seller.trade(code, sell_price, sell_amount, 's')
+                    sell_id = seller.trade(code, sell_price, sell_amount, 's', code_name)
                     save_trade_log_once(code, sell_price, sell_amount)
                     print("[%s] Price  Now:%s, Operate_price:%s】" % (BeijingTime('%H:%M%S'), price_now, sell_price))
                     operate_prices[code] = sell_price
                     time.sleep(0.2)
-            except KeyError as e:
-                print(e)
-            except Exception as e:
-                if str(e).find('客户股票不足'):
-                    print(str(e), codes[i])
-                    return code
+            # except KeyError as e:
+            #     print("啥玩意？")
+            #     print(e)
+            # except Exception as e:
+            #     print("又咋了？")
+            #     if str(e).find('客户股票不足'):
+            #         print(str(e), codes[i])
+            #         return code
 

@@ -23,7 +23,7 @@ class Trader():
             print("委托类型不明",type)
         self.id = ''
 
-    def trade(self, code, price, amount, type):
+    def trade(self, code, price, amount, type, names={}):
         self.code = code
         self.price = price
         self.amount = amount
