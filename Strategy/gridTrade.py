@@ -5,11 +5,27 @@ from DataEngine.Data import get_qo, get_stock_name, get_fund_name
 from Trade.Operation import Trader
 import time
 
-code_name = {k[:6]:v for k,v in get_stock_name().items()}
-fund_name = {k[:6]:v for k,v in get_fund_name().items()}
-for i in fund_name.keys():
-    code_name[i] = fund_name[i]
-
+try:
+    code_name = {k[:6]:v for k,v in get_stock_name().items()}
+    fund_name = {k[:6]:v for k,v in get_fund_name().items()}
+    for i in fund_name.keys():
+        code_name[i] = fund_name[i]
+except Exception as e:
+    code_name={
+        '000725': '京东方',
+        '510050': '上证50',
+        '588000': '科创50',
+        '600415': '小商品城',
+        '002044':'美年健康',
+        '510050': '上证50',
+        '588000': '科创50',
+        '512690': '酒etf',
+    }
+    fund_name={
+        '510050': '上证50',
+        '588000': '科创50',
+        '512690': '酒etf',
+    }
 fund_codes= [x[:6] for x in fund_name.keys()]
 
 def code2name(codes, operate={}, gaps={}, close={}, buy_r={}, sell_r = {}):
@@ -114,6 +130,7 @@ def grid_bs(codes, user):
 
                 price_now = price_nows[code]
                 operate_price = operate_prices[code]
+
                 # if count % 3600 == 0:
                     # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
                 # 判断是否进入买点

@@ -21,9 +21,9 @@ class Trader():
             self.type = type
         else:
             print("委托类型不明",type)
-        self.id = ''
+        self.id = '100'
 
-    def trade(self, code, price, amount, type):
+    def trade(self, code, price, amount, type, names={}):
         self.code = code
         self.price = price
         self.amount = amount
@@ -38,9 +38,10 @@ class Trader():
             if self.type in ['buy','b']:
                 try:
                     buy_record = self.user.buy(self.code, self.price, self.amount)
-                    self.id = buy_record['message']
+                    # self.id = buy_record['message']
                     print("%s Success， Code:%s, Price：%s, Amount:%s"%(type2Namee[self.type], self.code, self.price, self.amount))
-                    return self.id
+                    return 0
+                    # return self.id
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
                     print("错误日志:\n-->\t代码：%s\n-->\t价格:%s\n-->\t委托数量：%s\n-->\t买卖类型：%s\n-->\t" % (self.code, self.price, self.amount, self.type))
@@ -52,7 +53,7 @@ class Trader():
                 try:
                     sell_record = self.user.sell(self.code, self.price, self.amount)
                     print("%s Success， Code:%s, Price：%s, Amount:%s"%(type2Namee[self.type], self.code, self.price, self.amount))
-                    self.id = sell_record['message']
+                    # self.id = sell_record['message']
 
                 except KeyError as e:
                     print("好像没有委托成功-->拿不到合同号：",str(e))
