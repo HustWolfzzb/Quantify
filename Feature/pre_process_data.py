@@ -18,7 +18,7 @@ def process_data(ts_code='600031.SH', start_date='20140101', end_date='20210101'
             cal = True
     if not cal:
         # data.set_index(['trade_date'], inplace=True)
-        return data[need_col],0
+        return data[need_col], 0
     if len(data)<49:
         return []
     data['delta_ma5'] = (data['close'] - data['ma5'] ) / data['close']

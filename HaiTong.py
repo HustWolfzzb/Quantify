@@ -80,11 +80,16 @@ if __name__ == '__main__':
     # grid_bs(['513550', '002044','000725','600031'], user)
     # grid_bs(['600900', '600036', '510050', '002044','000725','600031'], user)
     while len(codes) > 0:
-        # if int(datetime.datetime.now().strftime('%H')) < 9 or datetime.datetime.now().strftime('%M') < '29':
-        #         print("\rWait!%s")
-        #         time.sleep(60)
-        #         continue
-        s = grid_bs(codes, user)
-        codes.remove(s)
+        if int(datetime.datetime.now().strftime('%H')) < 9:
+            print("\r九点都没到！!%s")
+            time.sleep(1800)
+        elif int(datetime.datetime.now().strftime('%H')) == 9 \
+                and int(datetime.datetime.now().strftime('%M')) < 29:
+            print("\r坐等开盘！!%s")
+            time.sleep(60)
+            continue
+        else:
+            s = grid_bs(codes, user)
+            codes.remove(s)
 
     # grid_bs(['513550','510050','002044','000725','600031'], user)

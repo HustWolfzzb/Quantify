@@ -48,8 +48,8 @@ def BeijingTime(format = '%H:%M:%S'):
 
     # 协调世界时
     utc_now = datetime.utcnow().replace(tzinfo=timezone.utc)
-    print(utc_now, utc_now.tzname())
-    print(utc_now.date(), utc_now.tzname())
+    # print(utc_now, utc_now.tzname())
+    # print(utc_now.date(), utc_now.tzname())
 
     # 北京时间
     beijing_now = utc_now.astimezone(SHA_TZ)
@@ -110,7 +110,7 @@ def http_get_request(url, params, add_to_headers=None):
         else:
             return {"status": "fail"}
     except Exception as e:
-        print("httpGet failed, detail is:%s" % e)
+        # print("httpGet failed, detail is:%s" % e)
         return {"status": "fail", "msg": "%s" % e}
 
 def http_post_request(url, params, add_to_headers=None):
@@ -261,7 +261,7 @@ def generate_order_id():
         oid = (oid + str(random.randint(0,9)))[:-1]
     return oid
 
-def order(symbol, type, amount, price=0):
+def order(symbol, type, amount, op_price, price=0):
     url = "https://api.huobi.pro"
     re_path = '/v1/order/orders/place'
     # id = generate_order_id()
@@ -278,17 +278,22 @@ def order(symbol, type, amount, price=0):
         paras['price'] = price
     # print(paras)
     data = api_key_post(url, re_path, paras, ACCESS_KEY, SECRET_KEY)
+    if data['status'].find('ok')!=-1:
+        paras['status'] = data['status']
+        paras['data'] = data['data']
+        paras['timestamp'] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        save_order_detail_once(paras)
+        save_trade_log_once(symbol[:-4], {symbol[:-4]: {'price': op_price, 'amount': amount}})
+        return 1
+    else:
+        return 0
     # data = eval(str(data))
-    paras['status'] = data['status']
-    paras['data'] = data['data']
-    paras['timestamp'] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-    save_order_detail_once(paras)
-    save_trade_log_once(symbol[:-4], {symbol[:-4]:{'price':price, 'amount':amount}})
+
     # return data['data']
 
 
 def save_order_detail_once(para):
-    print(para)
+    # print(para)
     string = json.dumps(para, indent=4)
     with open('trade_log/%s-%s-%s.txt'%(para['symbol'], para['data'], para['timestamp']), 'w', encoding='utf8') as log:
         log.write(string)
@@ -299,6 +304,7 @@ def load_trade_log_once(code):
 
 
 def save_trade_log_once(code, para):
+    # print(para)
     with open('trade_log/%s-log.txt'%code, 'w', encoding='utf8') as f:
         string = json.dumps(para, indent=4)
         f.write(string)
@@ -307,6 +313,17 @@ def load_gaps():
     with open('trade_log/gaps.txt', 'r', encoding='utf8') as f:
         return json.load(f)
 
+
+def load_para():
+    with open('trade_log/parameters.txt', 'r', encoding='utf8') as f:
+        return json.load(f)
+
+def save_para(paras):
+    string = json.dumps(paras, indent=4)
+    with open('trade_log/parameters.txt', 'w', encoding='utf8') as log:
+        log.write(string)
+
+
 def load_rates(type):
     with open('trade_log/%s_rates.txt'%type, 'r', encoding='utf8') as f:
         return json.load(f)
@@ -314,6 +331,11 @@ def load_rates(type):
 def save_rates_once(rates, type):
     string = json.dumps(rates, indent=4)
     with open('trade_log/%s_rates.txt'%type, 'w', encoding='utf8') as log:
+        log.write(string)
+
+def save_gaps(gaps):
+    string = json.dumps(gaps, indent=4)
+    with open('trade_log/gaps.txt', 'w', encoding='utf8') as log:
         log.write(string)
 
 
@@ -331,9 +353,8 @@ def get_order_type(symbol):
                 type_freq['buy'] += 1
     return type_freq
 
-def grid_bs(codes=['shib']):
+def grid_bs(codes=['shib'], init_rate_rates={}):
     start = time.time()
-
     gaps = load_gaps()
     operate_prices = {symbol:load_trade_log_once(symbol)[symbol]['price'] for symbol in codes }
     count = 0
@@ -343,54 +364,63 @@ def grid_bs(codes=['shib']):
     sell_rates = load_rates('sell')
     while True:
         for symbol in codes:
+            init_rr = init_rate_rates[symbol]
             count += 1
-            time.sleep(1)
+            time.sleep(1 + random.randint(-1,2))
             gap = gaps[symbol]
             operate_price = operate_prices[symbol]
             buy_rate = buy_rates[symbol]
             sell_rate = sell_rates[symbol]
             try:
                 price_now = get_price(symbol)
-                if count % 3 == 0:
-                    print("\r价格%s, 交易:[buy:%s, sell:%s], 运行时间：%s, GAP:%s, BUY_RATE:%s, SELL_RATE:%s, OP_Pirce:%s" %
-                          (price_now, buy_times[symbol], sell_times[symbol], round(time.time() - start), round(gap, 8), buy_rate,
-                           sell_rate, operate_price), end='...')
+                if count % 5 == 0:
+                    print("\r【%s】价格%s, 交易:[buy:%s, sell:%s], 运行时间：%s, GAP:%s, BUY_RATE:%s, SELL_RATE:%s, OP_Pirce:%s" %
+                          (symbol, price_now, buy_times[symbol], sell_times[symbol], round(time.time() - start), round(gap, 8), round(buy_rate,1),
+                           round(sell_rate,1), operate_price), end='...')
                 # if count % 3600 == 0:
                     # print("\r%s:【Pirce:%s, Gap:%s, Operate:%s】 " % (code, price_now, gap, operate_price))
-                if price_now < operate_price - gap * buy_rate:
-                    sell_rates[symbol] = 3
-                    buy_rates[symbol] *= 1.2
+                if price_now < operate_price - gap * round(buy_rate,1):
+                    sell_rates[symbol] = init_rr['sell']
+                    buy_rates[symbol] *= 1.1
                     save_rates_once(sell_rates, 'sell')
                     save_rates_once(buy_rates, 'buy')
-                    buy_price = round(operate_price - gap, 8)
-                    buy_amount = round(8/buy_price)
+                    buy_price = round(operate_price - gap, init_rr['price_bit'])
+                    buy_amount = round(8/buy_price, init_rr['amount_bit'])
                     while buy_price * buy_amount < 5:
                         buy_amount *= 1.02
-                    buy_amount = round(buy_amount)
-                    order(symbol+'usdt', 'buy-limit', buy_amount, price_now)
-                    print("\r [%s] Price  Now:%s, Operate_price:%s" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), price_now, buy_price))
+                    buy_amount = round(buy_amount, init_rr['amount_bit'])
+                    x = order(symbol+'usdt', 'buy-limit', buy_amount, buy_price, price_now)
+                    if x == 0:
+                        print("买入出毛病了，快看")
+                        break
+                    print("\r [%s] Price  Now:%s, Amount:%s, Operate_price:%s" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), round(price_now,init_rr['price_bit']), buy_amount, buy_price))
                     operate_prices[symbol] = buy_price
                     time.sleep(0.2)
                     buy_times[symbol] += 1
 
-                if price_now > operate_price + gap * sell_rate:
-                    buy_rates[symbol] = 1.2
-                    sell_rate[symbol] *= 1.2
+                if price_now > operate_price + gap * round(sell_rate,1):
+                    buy_rates[symbol] = init_rr['buy']
+                    sell_rates[symbol] *= 1.2
                     save_rates_once(sell_rates, 'sell')
                     save_rates_once(buy_rates, 'buy')
-                    sell_price = round(operate_price + gap, 8)
-                    sell_amount = round(6/sell_price)
+                    sell_price = round(operate_price + gap, init_rr['price_bit'])
+                    sell_amount = round(6/sell_price, init_rr['amount_bit'])
                     while sell_price * sell_amount < 5.1:
                         sell_amount *= 1.02
-                    sell_amount = round(sell_amount)
+                    sell_amount = round(sell_amount, init_rr['amount_bit'])
                     # if code[:3] == '513':
                     #     sell_amount = 300
-                    order(symbol+'usdt', 'sell-limit', sell_amount, price_now)
-                    print("\r [%s] Price  Now:%s, Operate_price:%s" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), price_now, sell_price))
+                    x = order(symbol+'usdt', 'sell-limit', sell_amount, sell_price, price_now)
+                    if x == 0:
+                        print("卖出出毛病了，快看")
+                        break
+                    print("\r [%s] Price  Now:%s, Amount:%s, Operate_price:%s" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), round(price_now,init_rr['price_bit']), sell_amount, sell_price))
                     operate_prices[symbol] = sell_price
                     time.sleep(0.2)
                     sell_times[symbol] += 1
-            except KeyError as e:
+            except Exception as e:
+                if str(e).find('HTTPSConnection') != -1:
+                    break
                 print(e)
                 break
 
@@ -400,10 +430,29 @@ if __name__ == '__main__':
     # for i in range(10):
     #     time.sleep(1)
     #     print(get_price_eth())
+    codes = ['shib', 'eth']
+    # gaps = load_gaps()
+    # operate_prices = {symbol: load_trade_log_once(symbol)[symbol]['price'] for symbol in codes}
+    # buy_rates = load_rates('buy')
+    # sell_rates = load_rates('sell')
+    # gaps['eth'] = 100
+    # save_gaps(gaps)
+    # buy_rates['eth'] = 1
+    # sell_rates['eth'] = 5
+    # save_rates_once(buy_rates,'buy')
+    # save_rates_once(sell_rates,'sell')
+    # save_trade_log_once('eth', {'eth':{'price':2455, 'amount':0.002}})
+    # codes = ['shib', 'eth']
 
-    # print(get_account())
-    # for i in get_balance():
-    #     print(i)
-    grid_bs()
+
+    init_rate_paras = {
+        'shib': {'buy': 1.2, 'sell': 2, 'price_bit':8, 'amount_bit':0},
+        'eth': {'buy': 1, 'sell': 2, 'price_bit':2, 'amount_bit':4}
+    }
+    # save_para(init_rate_paras)
+
+
+    # init_rate_paras = load_para()
+    grid_bs(codes, init_rate_rates=init_rate_paras)
     # order('shibusdt', 'sell-market', 1000000, 7.77e-06)
     # print(get_price('shib'))
