@@ -131,12 +131,13 @@ def get_fina_indicator(ts_code):
     """
     return pro.fina_indicator(ts_code = ts_code)
 
-def get_daily_basic(date='20000101'):
-    if date == '20000101':
+def get_daily_basic(date=''):
+    if date == '':
         date = datetime.datetime.now().strftime("%Y%m%d")
     df = pro.daily_basic(ts_code='', trade_date=date,
-                         fields='ts_code,trade_date,close,turnover_rate,volume_ratio,pe,pb,free_share,total_mv')
+                         fields='ts_code,trade_date,close,turnover_rate_f,volume_ratio,pe,pb,free_share,total_mv')
     return df
+
 
 def get_index(ts_code='399300.SZ', start_date='20180101', end_date='20181010'):
     df = pro.index_daily(ts_code=ts_code,start_date=start_date,end_date=end_date)
@@ -194,8 +195,11 @@ def get_fund_name():
 def get_fund_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029', ma=[5,10,20,50]):
     return ts.pro_bar(ts_code=ts_code,  asset = 'FD', ma=ma, start_date=start_date, end_date=end_date)
 
-def get_stock_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029'):
-    return ts.pro_bar(ts_code=ts_code,  asset = 'E', start_date=start_date, end_date=end_date, adj='qfq',  ma=[5,10,20,50])
+def get_stock_daily(ts_code='150018.SZ', start_date='20180101', end_date='20181029', ma=[5,10,20,50]):
+    return ts.pro_bar(ts_code=ts_code,  asset = 'E', start_date=start_date, end_date=end_date, adj='qfq', ma=ma, freq='D')
+
+def get_stock_weekly(ts_code='150018.SZ', start_date='20180101', end_date='20181029', ma=[5,10,20,50]):
+    return ts.pro_bar(ts_code=ts_code,  asset = 'E', start_date=start_date, end_date=end_date, adj='qfq',  ma=ma, freq='W')
 
 
 if __name__ == '__main__':

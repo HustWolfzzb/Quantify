@@ -385,7 +385,7 @@ def grid_bs(codes=['shib'], init_rate_rates={}):
                     save_rates_once(sell_rates, 'sell')
                     save_rates_once(buy_rates, 'buy')
                     buy_price = round(operate_price - gap, init_rr['price_bit'])
-                    buy_amount = round(8/buy_price, init_rr['amount_bit'])
+                    buy_amount = round(10/buy_price, init_rr['amount_bit'])
                     while buy_price * buy_amount < 5:
                         buy_amount *= 1.02
                     buy_amount = round(buy_amount, init_rr['amount_bit'])
@@ -400,11 +400,11 @@ def grid_bs(codes=['shib'], init_rate_rates={}):
 
                 if price_now > operate_price + gap * round(sell_rate,1):
                     buy_rates[symbol] = init_rr['buy']
-                    sell_rates[symbol] *= 1.2
+                    sell_rates[symbol] *= 1.15
                     save_rates_once(sell_rates, 'sell')
                     save_rates_once(buy_rates, 'buy')
                     sell_price = round(operate_price + gap, init_rr['price_bit'])
-                    sell_amount = round(6/sell_price, init_rr['amount_bit'])
+                    sell_amount = round(10/sell_price, init_rr['amount_bit'])
                     while sell_price * sell_amount < 5.1:
                         sell_amount *= 1.02
                     sell_amount = round(sell_amount, init_rr['amount_bit'])
@@ -419,9 +419,9 @@ def grid_bs(codes=['shib'], init_rate_rates={}):
                     time.sleep(0.2)
                     sell_times[symbol] += 1
             except Exception as e:
-                if str(e).find('HTTPSConnection') != -1:
-                    break
-                print(e)
+                # if str(e).find('HTTPSConnection') != -1:
+                #     break
+                # print(e)
                 break
 
 
@@ -447,7 +447,7 @@ if __name__ == '__main__':
 
     init_rate_paras = {
         'shib': {'buy': 1.2, 'sell': 2, 'price_bit':8, 'amount_bit':0},
-        'eth': {'buy': 1, 'sell': 2, 'price_bit':2, 'amount_bit':4}
+        'eth': {'buy': 1, 'sell': 4, 'price_bit':2, 'amount_bit':4}
     }
     # save_para(init_rate_paras)
 

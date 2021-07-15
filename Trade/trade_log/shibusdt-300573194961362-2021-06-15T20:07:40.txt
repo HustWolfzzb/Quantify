@@ -1,0 +1,11 @@
+{
+    "account-id": 25645760,
+    "symbol": "shibusdt",
+    "type": "buy-limit",
+    "amount": 920598,
+    "price": 8.63e-06,
+    "source": "spot-api",
+    "status": "ok",
+    "data": "300573194961362",
+    "timestamp": "2021-06-15T20:07:40"
+}

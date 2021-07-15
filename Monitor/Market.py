@@ -1,9 +1,11 @@
 import os
 import random
 import time
+import sys
+sys.path.append('../')
 from DataEngine.Data import pro, get_pro_stock_basic, get_concept, get_index_basic, \
-    get_stock_concepts, get_index_weight, get_index, get_stock_name, get_daily_basic,\
-    get_stock_daily, qo
+    get_stock_concepts, get_index_weight, get_index, get_stock_name, get_daily_basic, \
+    get_stock_weekly, qo, get_stock_daily
 from Strategy.follow_fund import get_Date_base_gap
 from Feature.pre_process_data import process_data
 import matplotlib.pyplot as plt
@@ -75,8 +77,6 @@ def all_base():
                 stock_concept[j] = [i]
             else:
                 stock_concept[j].append(i)
-
-
 
     industry = stock_info['industry']
     stock_industry = {}
@@ -240,9 +240,15 @@ def all_stock():
     count = 0
     length = len(stocks)
     # length = 100
-    if not os.path.exists('stock'):
-        os.makedirs('stock')
-    existStock = os.listdir('stock')
+    if os.getcwd().find('Monitor') == -1:
+        # dir_ = os.getcwd() + '/Monitor/stock_weeklys'
+        dir_ = os.getcwd() + '/Monitor/stock_%ss'%time_format
+    else:
+        # dir_ = os.getcwd() + '/stock_weeklys'
+        dir_ = os.getcwd() + '/stock_%ss'%time_format
+    if not os.path.exists(dir_):
+        os.makedirs(dir_)
+    existStock = os.listdir(dir_)
     stock_data = {}
     ok_stock = []
     while count < length:
@@ -254,18 +260,25 @@ def all_stock():
             if code+'.csv' not in existStock:
                 # count += 1
                 # continue
-                df = get_stock_daily(ts_code=code, start_date=ago, end_date=today)
-                if len(df) < 80:
+                if dir_.find('daily') != -1:
+                    df = get_stock_daily(ts_code=code, start_date=ago, end_date=today, ma=[3, 5, 10, 13, 30])
+                else:
+                    df = get_stock_weekly(ts_code=code, start_date=ago, end_date=today, ma=[3, 5, 10, 13, 30])
+
+                # if len(df) < 80:
+                #     count += 1
+                #     continue
+                if len(df) < 10:
                     count += 1
                     continue
-                df.to_csv('stock/%s.csv' % code, index=False)
+                df.to_csv(dir_+'/%s.csv' % code, index=False)
                 # print( code+'.csv' +" not in stock!")
             else:
-                df = pd.read_csv('stock/%s.csv'%code)
+                df = pd.read_csv(dir_+'/%s.csv'%code)
                 # count += 1
                 # print( code+'.csv' +" in stock!")
-            if len(df)<10:
-                print( code+'.csv' +" not long enough!")
+            if len(df) < 20:
+                # print( code+'.csv' +" not long enough!")
                 count += 1
                 continue
             stock_data[code] = df
@@ -280,7 +293,11 @@ def all_stock():
                 continue
             else:
                 print(e)
-                time.sleep(61)
+                if str(e).find('NoneType')!=-1:
+                    count += 1
+                    pass
+                else:
+                    time.sleep(61)
     return stock_data, ok_stock
 
 def get_industry_avg(stock_data, filed_stock, ss):
@@ -309,45 +326,369 @@ def get_industry_avg_real(stock_data, filed_stock):
         field_avg[field] = round(sum(avg)/len(avg),3)
     return field_avg
 
+def check_plus(data, gap = 0.995):
+    for i in range(len(data) - 1):
+        if data[i] < data[i + 1] * gap:
+            return 0
+        else:
+            continue
+    return 1
 
-def get_best_stcok(stock_data, ok_stock, ss=0, gap = 30, ma_value=5, filter_rate = 0.1):
+def check_up_times(close, open):
+    up = 0
+    for i in range(len(close)):
+        if close[i] > open[i]:
+            up += 1
+    return up
+
+def check_high_close(close, high, gap=0.96):
+    for i in range(len(close)):
+        if close[i] / high[i] < gap:
+            return False
+    return True
+
+def get_best_stcok_by_awei(stock_data, ok_stock, ss=0, gap = 30, ma_value=7,  ma_value_1 = 14):
+    stock_name = get_stock_name()
+    print("\n")
+    stock_industry, industry_stock = get_stock_info('industry')
+    field_avg = get_industry_avg(stock_data, industry_stock, ss)
+    with open('awei-%s.txt'%time_format, 'w', encoding='utf8') as f:
+        for code in ok_stock:
+            if code in industry_stock['农业综合'] or code in industry_stock['银行'] or stock_name[code].find('ST') != -1:
+                continue
+            data = stock_data[code]
+            if gap == 0:
+                gap = len(data)
+            date = data.loc[ss:gap+ss, 'trade_date'].tolist()
+            high = data.loc[ss:gap+ss, 'high'].tolist()
+            low = data.loc[ss:gap+ss, 'low'].tolist()
+            open_ = data.loc[ss:gap+ss, 'open'].tolist()
+            close = data.loc[ss:gap+ss, 'close'].tolist()
+            amount = data.loc[ss:gap + ss, 'amount'].tolist()
+            try:
+                vol = data.loc[ss:gap + ss, 'ma_v_' + str(ma_value)].tolist()
+                ma = data.loc[ss:gap + ss, 'ma' + str(ma_value)].tolist()
+                ma1 = data.loc[ss:gap + ss, 'ma' + str(ma_value_1)].tolist()
+            except Exception as e:
+                # print(e)
+                continue
+            # name = stock_name[code]
+            if stock_name[code].find('ST') != -1:
+                continue
+            for idx in range(len(close) - 6, -1, -1):
+                DATE = date[idx:idx + 5]
+                MA = ma[idx:idx + 5]
+                MA1 = ma1[idx:idx + 5]
+                VOL = vol[idx:idx + 5]
+                AMOUNT = amount[idx:idx + 5]
+                CLOSE = close[idx:idx + 5]
+                HIGH = high[idx:idx + 5]
+                LOW = low[idx:idx + 5]
+                OPEN = open_[idx:idx + 5]
+                if min(AMOUNT) < 100000:
+                    continue
+                if check_up_times(CLOSE, OPEN) < 3:
+                    continue
+                if (CLOSE[0] - OPEN[ 4]) / OPEN[4] > 0.2 or (CLOSE[0] - OPEN[4]) / OPEN[4] < 0.05:
+                    continue
+                if check_plus(MA) == 0:
+                    continue
+                if check_plus(VOL) == 0:
+                    continue
+                # if VOL[0] <= VOL[1]:
+                #     continue
+                if not check_high_close(CLOSE, HIGH, 0.92):
+                    continue
+                if HIGH[0] - CLOSE[0] > (CLOSE[0] - OPEN[0]) * 1.5 or CLOSE[0] - OPEN[0] < 0:
+                    continue
+                if VOL[0] == max(VOL) and CLOSE[0] < OPEN[0]:
+                    continue
+                buy_price = 0
+                if idx >= 5:
+                    for i in range(idx - 1, idx - 5, -1):
+                        if low[i] < ma[i]:
+                            buy_price = ma[i]
+                            break
+                    if buy_price == 0:
+                        continue
+                    f.write("%s 当日可买入：%s-%s, 五日涨幅：%s, 买入后五日涨幅：%s, 当日收盘价：%s, \n" % (DATE[0],
+                                                                            code, stock_name[code],
+                                                                            round((CLOSE[0] - OPEN[4]) / OPEN[4], 3),
+                                                                            round((close[idx - 5] - CLOSE[0])/ CLOSE[0], 3),
+                                                                            CLOSE[0]))
+                else:
+                    for i in range(idx - 1, -1, -1):
+                        if low[i] < ma[i]:
+                            buy_price = ma[i]
+                            break
+                    if buy_price == 0:
+                        buy_price=CLOSE[0]
+                    f.write("%s 当日可买入：%s-%s, 五日涨幅：%s, 至今日涨幅：%s, 当日收盘价：%s\n"%(DATE[0],
+                                                                      code, stock_name[code],
+                                                                         round((CLOSE[0] - OPEN[4]) / OPEN[4], 3),
+                                                                         round((close[0] - buy_price) / buy_price, 3),
+                                                                      CLOSE[0]))
+
+def get_best_stcok_by_ma(stock_data, ok_stock, ss=0, gap = 30, ma_value=7,  ma_value_1 = 14):
+    stock_name = get_stock_name()
+    print("\n")
+    stock_industry, industry_stock = get_stock_info('industry')
+    field_avg = get_industry_avg(stock_data, industry_stock, ss)
+    with open('ma.txt', 'w', encoding='utf8') as f:
+        for code in ok_stock:
+            data = stock_data[code]
+            if gap == 0:
+                gap = len(data)
+            date = data.loc[ss:gap+ss, 'trade_date'].tolist()
+            high = data.loc[ss:gap+ss, 'high'].tolist()
+            open_ = data.loc[ss:gap+ss, 'open'].tolist()
+            close = data.loc[ss:gap+ss, 'close'].tolist()
+            vol = data.loc[ss:gap+ss, 'vol'].tolist()
+            ma = data.loc[ss:gap + ss, 'ma' + str(ma_value)].tolist()
+            ma1 = data.loc[ss:gap + ss, 'ma' + str(ma_value_1)].tolist()
+            # name = stock_name[code]
+            if stock_name[code].find('ST') != -1:
+                continue
+            flag = False
+            buy_price = 0
+            success = 0
+            fail = 0
+            earn = 0
+            loss = 0
+            for idx in range(len(close) - 2, -1, -1):
+                MA = ma[idx]
+                MA1 = ma1[idx]
+                CLOSE = close[idx]
+                HIGH = high[idx]
+                if ma[idx + 1] < ma1[idx + 1] and MA >= MA1 \
+                        and not flag \
+                        and vol[idx] >= vol[idx + 1] * 0.9\
+                        and (close[idx] - open_[idx]) / open_[idx] < 0.2 \
+                        and (close[idx] - open_[idx]) / open_[idx]  > 0 \
+                        and (high[idx] - close[idx]) / (close[idx] - open_[idx]) < 2:
+                    flag = True
+                    buy_price = CLOSE
+                    f.write("【%s】买入-> %s, MA%s:%s, %s, MA%s:%s, 价格：%s\n"%(date[idx], stock_name[code], ma_value, round(ma[idx + 1], 2), round(MA, 2), ma_value_1, round(MA1, 2), round(CLOSE, 2)))
+                    continue
+                if ((ma[idx + 1] >= ma1[idx + 1] and MA < MA1) or (HIGH > buy_price * 1.05)) and flag:
+                    flag = False
+                    if HIGH > buy_price * 1.05 or CLOSE > buy_price:
+                        Nice_Shot = '=='
+                        success += 1
+                        if HIGH > buy_price * 1.05:
+                            earn = HIGH - buy_price
+                        else:
+                            earn = CLOSE - buy_price
+                        f.write("【%s】卖出<-：%s, MA%s:%s, %s, MA%s:%s, 【%s价格%s】：%s\n" % (
+                        date[idx], stock_name[code], ma_value, round(ma[idx + 1], 2), round(MA, 2), ma_value_1,
+                        round(MA1, 2), Nice_Shot, Nice_Shot, round(buy_price * 1.05, 2)))
+                    else:
+                        Nice_Shot = '~~'
+                        fail += 1
+                        loss = buy_price - CLOSE
+                        f.write("【%s】卖出<- %s, MA%s:%s, %s, MA%s:%s, 【%s价格%s】：%s\n" % (
+                            date[idx], stock_name[code], ma_value, round(ma[idx + 1], 2), round(MA, 2), ma_value_1,
+                            round(MA1, 2), Nice_Shot, Nice_Shot, round(CLOSE, 2)))
+            # print("胜: %s Earn:%s , 负：%s Loss:%s, "%(success, round(earn,2) , fail, round(loss,2)), end='')
+            # if success / (fail + 1) > 2:
+            #     print("胜手比例:%s"%(round((success + 1) / (loss + 1),2) ))
+            # else:
+            #     print("")
+
+def get_best_stcok_by_mo(stock_data, ok_stock, ss=0, gap = 30, ma_value=10,  ma_value_1 = 20):
+    stock_name = get_stock_name()
+    print("\n")
+    stock_industry, industry_stock = get_stock_info('industry')
+    field_avg = get_industry_avg(stock_data, industry_stock, ss)
+    with open('mo.txt', 'w', encoding='utf8') as f:
+        for code in ok_stock:
+            data = stock_data[code]
+            if gap == 0:
+                gap = len(data)
+            date = data.loc[ss:gap+ss, 'trade_date'].tolist()
+            high = data.loc[ss:gap+ss, 'high'].tolist()
+            open_ = data.loc[ss:gap+ss, 'open'].tolist()
+            close = data.loc[ss:gap+ss, 'close'].tolist()
+            vol = data.loc[ss:gap+ss, 'vol'].tolist()
+            ma = data.loc[ss:gap + ss, 'ma' + str(ma_value)].tolist()
+            ma1 = data.loc[ss:gap + ss, 'ma' + str(ma_value_1)].tolist()
+            # name = stock_name[code]
+            if stock_name[code].find('ST') != -1:
+                continue
+            flag = False
+            buy_price = 0
+            success = 0
+            fail = 0
+            earn = 0
+            loss = 0
+            for idx in range(len(close) - 2, -1, -1):
+                MA = ma[idx]
+                MA1 = ma1[idx]
+                CLOSE = close[idx]
+                HIGH = high[idx]
+                if ma[idx + 1] < ma1[idx + 1] and MA >= MA1 \
+                        and not flag \
+                        and vol[idx] >= vol[idx + 1] * 0.9\
+                        and (close[idx] - open_[idx]) / open_[idx] < 0.2 \
+                        and (close[idx] - open_[idx]) / open_[idx]  > 0 \
+                        and (high[idx] - close[idx]) / (close[idx] - open_[idx]) < 2:
+                    flag = True
+                    buy_price = CLOSE
+                    f.write("【%s】买入-> %s, MA%s:%s, %s, MA%s:%s, 价格：%s\n"%(date[idx], stock_name[code], ma_value, round(ma[idx + 1], 2), round(MA, 2), ma_value_1, round(MA1, 2), round(CLOSE, 2)))
+                    continue
+                if ((ma[idx + 1] >= ma1[idx + 1] and MA < MA1) or (HIGH > buy_price * 1.05)) and flag:
+                    flag = False
+                    if HIGH > buy_price * 1.05 or CLOSE > buy_price:
+                        Nice_Shot = '=='
+                        success += 1
+                        if HIGH > buy_price * 1.05:
+                            earn = HIGH - buy_price
+                        else:
+                            earn = CLOSE - buy_price
+                        f.write("【%s】卖出<-：%s, MA%s:%s, %s, MA%s:%s, 【%s价格%s】：%s\n" % (
+                        date[idx], stock_name[code], ma_value, round(ma[idx + 1], 2), round(MA, 2), ma_value_1,
+                        round(MA1, 2), Nice_Shot, Nice_Shot, round(buy_price * 1.05, 2)))
+                    else:
+                        Nice_Shot = '~~'
+                        fail += 1
+                        loss = buy_price - CLOSE
+                        f.write("【%s】卖出<- %s, MA%s:%s, %s, MA%s:%s, 【%s价格%s】：%s\n" % (
+                            date[idx], stock_name[code], ma_value, round(ma[idx + 1], 2), round(MA, 2), ma_value_1,
+                            round(MA1, 2), Nice_Shot, Nice_Shot, round(CLOSE, 2)))
+            # print("胜: %s Earn:%s , 负：%s Loss:%s, "%(success, round(earn,2) , fail, round(loss,2)), end='')
+            # if success / (fail + 1) > 2:
+            #     print("胜手比例:%s"%(round((success + 1) / (loss + 1),2) ))
+            # else:
+            #     print("")
+
+def get_best_stcok_by_obv(stock_data, ok_stock, ss=0, gap = 30, ma_value=5, filter_rate = 0.1, ma_value_1 = 20):
     stock_name = get_stock_name()
     print("\n")
     code_90 = []
-    code_80 = []
     stock_industry, industry_stock = get_stock_info('industry')
     field_avg = get_industry_avg(stock_data, industry_stock, ss)
+    code_ok = []
     for code in ok_stock:
         data = stock_data[code]
         length = len(data)
         close = data.loc[ss:gap+ss, 'close'].tolist()
         high = data.loc[ss:gap+ss, 'high'].tolist()
         open = data.loc[ss:gap+ss, 'open'].tolist()
-        ma = data.loc[ss:gap+ss, 'ma'+str(ma_value)].tolist()
-        ma1 = data.loc[ss:gap+ss, 'ma20'].tolist()
-        # ma5 = data.loc[ss : ss + gap, 'ma5'].tolist()
-        # if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
-        #     continue
+
+
         up = 0
         down = 0
-        sumDay = len(ma)
+        sumDay = len(close)
         name = stock_name[code]
         # if name.lower().find('st') != -1:
         #     continue
-        for i in range(sumDay):
-            if close[i] < ma[i] or open[i] < ma[i]:
-                down += 1
-            else:
-                up += 1
-        if down < sumDay * filter_rate :# and (high[0] - close[0])*2 < (close[0] - open[0]) and close[0]>open[0]:
+        if close[0] - open[0] < (high[0] - close[0]) * 2 \
+                or stock_name[code].find('ST') != -1:
+            continue
+
+        # for i in range(sumDay):
+        #     if close[i] < open[i]:
+        #         down += 1
+        #     else:
+        #         up += 1
+        # if down < sumDay * filter_rate :# and (high[0] - close[0])*2 < (close[0] - open[0]) and close[0]>open[0]:
+        #     if ss > 0:
+        #         print("【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s。 【%s】"
+        #               % (code, name, up, down, close[0], data.loc[ss-1, 'close'], data.loc[ss,'trade_date']))
+        #     else:
+        #         print("[%s:%s]【%s:%s】，上：%s, 下:%s, close:%s。【%s】" % (
+        #             stock_industry[code], field_avg[stock_industry[code]],
+        #              code, name, up, down, close[0], data.loc[ss,'trade_date']))
+        #     code_ok.append(code)
+        if (close[0] - close[10]) / close[10] >  (close[0] - close[20]) / close[20]  \
+            and  (close[0] - close[20]) / close[20] > 0 \
+            and (close[0] - close[5]) / close[5] > 0 \
+            and close[0] > open[0] \
+            and (close[0] - close[20]) / close[20] > (close[0] - close[30]) / close[30]:# and (high[0] - close[0])*2 < (close[0] - open[0]) and close[0]>open[0]:
             if ss > 0:
                 print("【%s:%s】，上：%s, 下:%s, close:%s, nextClose:%s。 【%s】"
-                      % (code, name, up, down, close[0], data.loc[ss-1, 'close'], data.loc[ss,'trade_date']))
+                      % (code, name, round((close[0] - close[10]) / close[10],2), round((close[0] - close[20]) / close[20] , 2), close[0], data.loc[ss-1, 'close'], data.loc[ss,'trade_date']))
             else:
                 print("[%s:%s]【%s:%s】，上：%s, 下:%s, close:%s。【%s】" % (
                     stock_industry[code], field_avg[stock_industry[code]],
                      code, name, up, down, close[0], data.loc[ss,'trade_date']))
-            code_90.append(code)
+            code_ok.append(code)
+    return code_ok
+
+def get_best_stcok(stock_data, ok_stock, ss=0, gap=30, ma_value=5, filter_rate=0.1, ma_value_1=20):
+    stock_name = get_stock_name()
+    print("\n")
+    code_90 = []
+    code_80 = []
+    stock_industry, industry_stock = get_stock_info('industry')
+    field_avg = get_industry_avg(stock_data, industry_stock, ss)
+    with open('mo-%s.txt'%time_format, 'a', encoding='utf8') as f:
+        f.write('========\n')
+        for code in ok_stock:
+            data = stock_data[code]
+            length = len(data)
+            close = data.loc[ss:gap + ss, 'close'].tolist()
+            high = data.loc[ss:gap + ss, 'high'].tolist()
+            open_ = data.loc[ss:gap + ss, 'open'].tolist()
+            ma = data.loc[ss:gap + ss, 'ma' + str(ma_value)].tolist()
+            ma1 = data.loc[ss:gap + ss, 'ma' + str(ma_value_1)].tolist()
+            # ma5 = data.loc[ss : ss + gap, 'ma5'].tolist()
+            # if close[-1] < ma5[-1] or close[-1] < ma10[-1]:
+            #     continue
+            up = 0
+            down = 0
+            sumDay = len(ma)
+            name = stock_name[code]
+            # if name.lower().find('st') != -1:
+            #     continue
+            for i in range(sumDay):
+                if close[i] < ma[i]:
+                    down += 1
+                else:
+                    up += 1
+            try:
+                # close[0] / close[5] < 1.02 or \
+                if close[0] < open_[0] or close[0] < close[1] or \
+                        data.loc[ss, 'close'] / data.loc[ss + 10, 'close'] < 1.04 or \
+                        data.loc[ss, 'close']  / data.loc[ss + 20, 'close'] < 1.08 or \
+                        close[0] - open_[0] < (high[0] - close[0]) or \
+                        stock_name[code].find('ST') != -1:
+                    continue
+            except KeyError as e:
+                continue
+            except IndexError as e:
+                continue
+            if down < sumDay * filter_rate:  # and (high[0] - close[0])*2 < (close[0] - open[0]) and close[0]>open[0]:
+                if daily_basic.at[code, 'turnover_rate_f'] < 3:
+                    continue
+                if daily_basic.at[code, 'total_mv'] < 500000:
+                    continue
+                try:
+                    if daily_basic.at[code, 'pe'] < 1 or daily_basic.at[code, 'pe'] > 100:
+                        continue
+                except Exception as e:
+                    continue
+                if ss > 0:
+                    if close[0] < data.loc[ss - 1, 'close']:
+                        shot = '[==]'
+                    else:
+                        shot = '[~~]'
+                    # if field_avg[stock_industry[code]] < 0:
+                    #     continue
+
+                    f.write("【%s】 [%s: %s] %s:%s  上：%s, 下:%s, close:%s, nextClose:%s %s \n"
+                          % (data.loc[ss, 'trade_date'], code, name,
+                             stock_industry[code], field_avg[stock_industry[code]],
+                             up, down,
+                             close[0], data.loc[ss - 1, 'close'], shot))
+                else:
+                    f.write("【%s】 [%s: %s] %s:%s  上：%s, 下:%s, close:%s \n" % (
+                        data.loc[ss, 'trade_date'],
+                        stock_industry[code], field_avg[stock_industry[code]],
+                        code, name,
+                         up, down, close[0]))
+                code_90.append(code)
+
 
         # elif down < sumDay * 0.2 and (high[0] - close[0])*3 < (close[0] - open[0]) and close[0]>open[0]:
         #     if ss > 0:
@@ -527,7 +868,6 @@ class nerual_:
         self.trained = True
 
 
-
 def ngram(data, code, ngram_probability):
     data['alpha_ma5'] = data['ma5'] / data['close']
     data['alpha_ma10'] = data['ma10'] / data['close']
@@ -601,12 +941,29 @@ if __name__ == '__main__':
 
     # real_time_stock(filed_show=False)
     ##################
-
+    daily_basic = get_daily_basic()
+    daily_basic.set_index(['ts_code'], inplace=True)
+    time_format = 'daily'
     niceCode={}
+    os.system('rm mo-%s.txt'%time_format)
+    os.system('rm -rf stock_%ss'%time_format)
     stock_data, ok_stock = all_stock()
-    # money = 1000000
-    #
-    c = get_best_stcok(stock_data, ok_stock, 0, 30, ma_value=20, filter_rate=0.15)
+    for i in range(10, -1, -1):
+        if time_format == 'weekly':
+            get_best_stcok(stock_data, ok_stock, i, 5, ma_value=3, ma_value_1=10, filter_rate=0.15)
+        else:
+            get_best_stcok(stock_data, ok_stock, i, 6, ma_value=5, ma_value_1=10, filter_rate=0.15)
+    # get_best_stcok_by_ma(stock_data, ok_stock, 0, 0, ma_value=3, ma_value_1=10)
+
+    get_best_stcok_by_awei(stock_data, ok_stock, 0, 5, ma_value=3, ma_value_1=10, )
+
+    # c = get_best_stcok_by_obv(stock_data, ok_stock, 7, 40, ma_value=10, filter_rate=0.2)
+    # print('========')
+    # x = get_best_stcok(stock_data, ok_stock, 7, 10, ma_value=5, filter_rate=0.2)
+    # for cc in c:
+    #     if cc in x:
+    #         print(cc,' is Good, check It')
+
 
     # print("====")
     # d = get_best_stcok(stock_data, ok_stock, 0, 10, ma_value=10)
