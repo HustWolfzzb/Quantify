@@ -659,15 +659,18 @@ def get_best_stcok(stock_data, ok_stock, ss=0, gap=30, ma_value=5, filter_rate=0
             except IndexError as e:
                 continue
             if down < sumDay * filter_rate:  # and (high[0] - close[0])*2 < (close[0] - open[0]) and close[0]>open[0]:
-                if daily_basic.at[code, 'turnover_rate_f'] < 3:
-                    continue
-                if daily_basic.at[code, 'total_mv'] < 500000:
-                    continue
                 try:
-                    if daily_basic.at[code, 'pe'] < 1 or daily_basic.at[code, 'pe'] > 100:
+                    if daily_basic.at[code, 'turnover_rate_f'] < 3:
                         continue
-                except Exception as e:
-                    continue
+                    if daily_basic.at[code, 'total_mv'] < 500000:
+                        continue
+                    try:
+                        if daily_basic.at[code, 'pe'] < 1 or daily_basic.at[code, 'pe'] > 100:
+                            continue
+                    except Exception as e:
+                        continue
+                except KeyError as e:
+                    pass
                 if ss > 0:
                     if close[0] < data.loc[ss - 1, 'close']:
                         shot = '[==]'
@@ -943,7 +946,7 @@ if __name__ == '__main__':
     ##################
     daily_basic = get_daily_basic()
     daily_basic.set_index(['ts_code'], inplace=True)
-    time_format = 'daily'
+    time_format = 'weekly'
     niceCode={}
     os.system('rm mo-%s.txt'%time_format)
     os.system('rm -rf stock_%ss'%time_format)
