@@ -294,8 +294,18 @@ def watch_nodes():
             continue
         else:
             monitor()
+python3
+import os
+def change_passwd():
+    names = [x for x in os.listdir('/home') if len(x) < 12]
+    for i in names:
+        if i=='zzb':
+            continue
+        name = i
+        password = i
+        if i=='tmp':
+            password = 'zzb162122'
+        print("sudo echo '%s:%s' | chpasswd"%(name, password))
 
 if __name__ == '__main__':
-    # add_etf()
-    watch_nodes()
-    # change_root_passwd()
+    change_passwd()

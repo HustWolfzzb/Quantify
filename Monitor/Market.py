@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.rcParams['font.sans-serif'] = ['SimHei']
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-
+time_format = 'daily'
 def plot_(label_list, num_list1, name):
     """
     绘制条形图
@@ -215,6 +215,9 @@ def all_index():
             print(name, ' : ', i[1], ",".join(weight_stock_name) )
 
 def get_stock_info(field='industry'):
+    if field == 'shenwan':
+        from Monitor.shenwan import read_classify
+        return read_classify()
     data = get_pro_stock_basic()
     data.set_index(['ts_code'], inplace=True)
     industry_stock = {}
@@ -227,25 +230,26 @@ def get_stock_info(field='industry'):
             industry_stock[data.at[index, 'industry']].append(index)
     return stock_industry, industry_stock
 
-def all_stock():
+
+def all_stock(filter=True, path='/Users/zhangzhaobo/PycharmProjects/Quantify/Monitor/'):
     stocks = get_pro_stock_basic()['ts_code'].tolist()
     new_stocks = []
-    for idx in stocks:
-        if idx[0]=='3' or idx[:3] == '688':
-            continue
-        else:
-            new_stocks.append(idx)
+    if filter:
+        for idx in stocks:
+            if idx[0]=='3' or idx[:3] == '688':
+                continue
+            else:
+                new_stocks.append(idx)
     stocks = new_stocks
     today, ago = get_Date_base_gap(0, 365)
     count = 0
     length = len(stocks)
     # length = 100
-    if os.getcwd().find('Monitor') == -1:
-        # dir_ = os.getcwd() + '/Monitor/stock_weeklys'
-        dir_ = os.getcwd() + '/Monitor/stock_%ss'%time_format
+    if path.find('Monitor')==-1:
+        base = os.getcwd() + '/Monitor/'
     else:
-        # dir_ = os.getcwd() + '/stock_weeklys'
-        dir_ = os.getcwd() + '/stock_%ss'%time_format
+        base = path
+    dir_ = base + 'stock_%ss'%time_format
     if not os.path.exists(dir_):
         os.makedirs(dir_)
     existStock = os.listdir(dir_)
@@ -303,14 +307,20 @@ def all_stock():
 def get_industry_avg(stock_data, filed_stock, ss):
     field_avg = {}
     for field in filed_stock.keys():
-        stocks =  filed_stock[field]
+        stocks = filed_stock[field]
         avg = []
         for code in stocks:
             if code not in stock_data.keys():
                 continue
             data = stock_data[code]
-            avg.append(data.loc[ss, 'pct_chg'])
-        field_avg[field] = round(sum(avg)/len(avg),3)
+            try:
+                avg.append(data.loc[ss, 'pct_chg'])
+            except Exception as e:
+                continue
+        if len(avg) == 0:
+            field_avg[field] = 0
+        else:
+            field_avg[field] = round(sum(avg)/len(avg), 3)
     return field_avg
 
 def get_industry_avg_real(stock_data, filed_stock):
@@ -429,6 +439,47 @@ def get_best_stcok_by_awei(stock_data, ok_stock, ss=0, gap = 30, ma_value=7,  ma
                                                                          round((close[0] - buy_price) / buy_price, 3),
                                                                       CLOSE[0]))
 
+
+def get_best_stcok_by_vol(stock_data, ok_stock, ss=0, gap = 30, ma_value=7,  ma_value_1 = 14):
+    stock_name = get_stock_name()
+    print("\n")
+    stock_industry, industry_stock = get_stock_info('industry')
+    field_avg = get_industry_avg(stock_data, industry_stock, ss)
+    if gap < 20:
+        gap = 20
+    with open('vol-%s.txt'%time_format, 'a', encoding='utf8') as f:
+        for code in ok_stock:
+            data = stock_data[code]
+            name = stock_name[code]
+            if gap == 0:
+                gap = len(data)
+            date = data.loc[ss:gap+ss, 'trade_date'].tolist()
+            high = data.loc[ss:gap+ss, 'high'].tolist()
+            low = data.loc[ss:gap+ss, 'low'].tolist()
+            open_ = data.loc[ss:gap+ss, 'open'].tolist()
+            close = data.loc[ss:gap+ss, 'close'].tolist()
+            amount = data.loc[ss:gap + ss, 'amount'].tolist()
+            vol = data.loc[ss:gap + ss, 'vol'].tolist()
+            # name = stock_name[code]
+            if stock_name[code].find('ST') != -1:
+                continue
+            if vol[0] / min(vol) < 2 \
+                    and vol[0] / min(vol) > 0.8 \
+                    and max(vol) / min(vol) > 5 \
+                    and close[0] / min(close) < 1.08 \
+                    and close[0] / min(close) > 0.9 \
+                    and max(close) / min(close) > 1.12:
+                if  ss > 0:
+                    f.write("【%s】 [%s: %s] %s:%s, close:%s, nextClose:%s \n"
+                            % (data.loc[ss, 'trade_date'], code, name,
+                               stock_industry[code], field_avg[stock_industry[code]],
+                               close[0], data.loc[ss - 1, 'close']))
+                else:
+                    f.write("【%s】 [%s: %s] %s:%s, close:%s \n"
+                                % (data.loc[ss, 'trade_date'], code, name,
+                                   stock_industry[code], field_avg[stock_industry[code]],
+                                   close[0]))
+
 def get_best_stcok_by_ma(stock_data, ok_stock, ss=0, gap = 30, ma_value=7,  ma_value_1 = 14):
     stock_name = get_stock_name()
     print("\n")
@@ -501,6 +552,7 @@ def get_best_stcok_by_mo(stock_data, ok_stock, ss=0, gap = 30, ma_value=10,  ma_
     stock_industry, industry_stock = get_stock_info('industry')
     field_avg = get_industry_avg(stock_data, industry_stock, ss)
     with open('mo.txt', 'w', encoding='utf8') as f:
+        f.write('[=======]\n')
         for code in ok_stock:
             data = stock_data[code]
             if gap == 0:
@@ -615,11 +667,11 @@ def get_best_stcok_by_obv(stock_data, ok_stock, ss=0, gap = 30, ma_value=5, filt
             code_ok.append(code)
     return code_ok
 
-def get_best_stcok(stock_data, ok_stock, ss=0, gap=30, ma_value=5, filter_rate=0.1, ma_value_1=20):
+def get_best_stcok(stock_data, ok_stock, ss=0, gap=30, ma_value=5, filter_rate=0.1, ma_value_1=20, codes=[]):
     stock_name = get_stock_name()
     print("\n")
     code_90 = []
-    code_80 = []
+    # stock_industry, industry_stock, _, _ = get_stock_info('shenwan')
     stock_industry, industry_stock = get_stock_info('industry')
     field_avg = get_industry_avg(stock_data, industry_stock, ss)
     with open('mo-%s.txt'%time_format, 'a', encoding='utf8') as f:
@@ -660,15 +712,15 @@ def get_best_stcok(stock_data, ok_stock, ss=0, gap=30, ma_value=5, filter_rate=0
                 continue
             if down < sumDay * filter_rate:  # and (high[0] - close[0])*2 < (close[0] - open[0]) and close[0]>open[0]:
                 try:
-                    if daily_basic.at[code, 'turnover_rate_f'] < 3:
+                    if daily_basic.at[code, 'turnover_rate_f'] < 4:
                         continue
                     if daily_basic.at[code, 'total_mv'] < 500000:
                         continue
-                    try:
-                        if daily_basic.at[code, 'pe'] < 1 or daily_basic.at[code, 'pe'] > 100:
-                            continue
-                    except Exception as e:
-                        continue
+                    # try:
+                    #     if daily_basic.at[code, 'pe'] < 1 or daily_basic.at[code, 'pe'] > 200:
+                    #         continue
+                    # except Exception as e:
+                    #     continue
                 except KeyError as e:
                     pass
                 if ss > 0:
@@ -679,17 +731,18 @@ def get_best_stcok(stock_data, ok_stock, ss=0, gap=30, ma_value=5, filter_rate=0
                     # if field_avg[stock_industry[code]] < 0:
                     #     continue
 
-                    f.write("【%s】 [%s: %s] %s:%s  上：%s, 下:%s, close:%s, nextClose:%s %s \n"
+                    f.write("【%s】 [%s: %s] %s:%s  上：%s, 下:%s, close:%s, nextClose:%s %s Count:%s\n"
                           % (data.loc[ss, 'trade_date'], code, name,
                              stock_industry[code], field_avg[stock_industry[code]],
                              up, down,
-                             close[0], data.loc[ss - 1, 'close'], shot))
+                             close[0], data.loc[ss - 1, 'close'], shot, all_code_filter.count(code)))
                 else:
-                    f.write("【%s】 [%s: %s] %s:%s  上：%s, 下:%s, close:%s \n" % (
+                    f.write("【%s】 [%s: %s] %s:%s  上：%s, 下:%s, close:%s, Count:%s\n" % (
                         data.loc[ss, 'trade_date'],
                         stock_industry[code], field_avg[stock_industry[code]],
                         code, name,
-                         up, down, close[0]))
+                         up, down, close[0],
+                        all_code_filter.count(code)))
                 code_90.append(code)
 
 
@@ -781,136 +834,6 @@ def real_time_stock(filed_show=True, stocks_show=True):
         # print("\r %s"%lines, end='')
         time.sleep(5)
 
-import tensorflow as tf
-
-class nerual_:
-    def __init__(self, data, code, evaluate_data,
-                 cols=['alpha_ma5', 'alpha_ma20', 'alpha_ma50', 'alpha_ma_v_5', 'alpha_ma_v_20', 'alpha_ma_v_50' ]):
-        self.data = data
-        self.cols = cols
-        self.evaluate_data = evaluate_data
-        self.evaluate_target = evaluate_data
-        self.target = data['pct_chg'].tolist()
-        self.feature = len(self.cols)
-        self.batch_size = 200
-        self.epoch = 1000
-        self.code = code
-        self.trained = False
-        self.init()
-
-    def get_batch(self, batch_size=100):
-        loc = []
-        for i in range(batch_size):
-            loc.append(random.randint(1, len(self.data) - 1))
-        X_re = []
-        y_re = []
-        for i in loc:
-            X_re.append(self.data.loc[:, self.cols].loc[i,:].tolist())
-            y_re.append(self.target[i])
-        return np.array(X_re), np.array(y_re)
-
-    def evaluate(self):
-        X = [self.data.loc[0, self.cols].tolist()]
-        Y = [[self.data.loc[0, 'pct_chg']]]
-        with tf.Session() as sess:
-            feed_dict = {
-                self.x: X,
-                self.y: Y,
-            }
-            pridict, _ = sess.run([self.output], feed_dict=feed_dict)
-            print("预测明天的涨幅为：%s")
-
-    def init(self):
-        self.x = tf.placeholder(tf.float32, [None, 6])
-        self.y = tf.placeholder(tf.float32, [None])
-        # X->hidden_layer
-        self.w1 = tf.Variable(tf.random_uniform([6, 25], 0, 1))
-        self.b1 = tf.Variable(tf.random_uniform([25], 0, 1))
-        self.out_put_hidden1 = tf.matmul(self.x, self.w1) + self.b1
-        # self.out_put_1 = tf.reduce_mean(self.out_put_hidden1, 1, keep_dims=False)
-        self.layer1 = tf.nn.sigmoid(self.out_put_hidden1) # 激励函数
-        # # hidden_layer->output
-        self.w2 = tf.Variable(tf.random_uniform([25,1],0,1))
-        self.b2 = tf.Variable(tf.random_uniform([1],0,1))
-        self.output = tf.matmul(self.layer1, self.w2) + self.b2
-        # # down = tf.reshape(y - output, [-1,1])
-        # layer2 = tf.nn.relu(output)
-        # layer2 = y-output
-        self.loss = tf.reduce_sum(self.output - self.y)  # y为真实数据， layer2为网络预测结果
-        # loss1 = tf.reduce_sum(loss, 1, keep_dims=False)
-
-    def train(self):
-        self.saver = tf.train.Saver()
-        with tf.Session() as sess:
-            start = time.clock()
-            saver_add = 'model/%s/' % self.code
-            if not self.trained:
-                sess.run(tf.global_variables_initializer())
-            else:
-                self.saver.restore(sess, saver_add + 'model.ckpt')
-            self.train_op = tf.train.GradientDescentOptimizer(0.01).minimize(self.loss)
-            for i in range(self.epoch):
-                X, Y = self.get_batch(self.batch_size)
-                # print(X.shape)
-                # print(Y.shape)
-                feed_dict = {
-                    self.x : X,
-                    self.y :Y,
-                }
-                loss,_ = sess.run([self.loss, self.train_op], feed_dict=feed_dict)
-                if i % 100 == 0:
-                    try:
-                        os.makedirs(saver_add)
-                    except:
-                        pass
-                    self.saver.save(sess, saver_add + 'model.ckpt')
-                if i % 10 == 0:
-                    print("LOSS:%s, EPOCH:%s"%(loss, i))
-
-    def loadModel(self):
-        self.trained = True
-
-
-def ngram(data, code, ngram_probability):
-    data['alpha_ma5'] = data['ma5'] / data['close']
-    data['alpha_ma10'] = data['ma10'] / data['close']
-    data['alpha_ma20'] = data['ma20'] / data['close']
-    data['alpha_ma50'] = data['ma50'] / data['close']
-    data['alpha_ma_v_5'] = data['ma_v_5'] / data['vol']
-    data['alpha_ma_v_10'] = data['ma_v_10'] / data['vol']
-    data['alpha_ma_v_20'] = data['ma_v_20'] / data['vol']
-    data['alpha_ma_v_50'] = data['ma_v_50'] / data['vol']
-    data['zhangdie'] =  data['pct_chg']/10 + 1
-    data = data.fillna(0)
-    cols = ['alpha_ma5', 'alpha_ma10', 'alpha_ma20', 'alpha_ma50', 'alpha_ma_v_5', 'alpha_ma_v_10', 'alpha_ma_v_20', 'alpha_ma_v_50', 'zhangdie']
-    if not os.path.exists('ngram_prob'):
-        os.makedirs('ngram_prob')
-    existStock = os.listdir('ngram_prob')
-    choose_col = cols[1]
-    col_data = data.loc[:, choose_col].to_list()
-    pct_chg = data.loc[:, 'pct_chg'].to_list()
-    print("length:%s"%len(col_data))
-    bit = 2
-    ma = 5
-    for i in range(1,len(col_data)-5):
-        ngram = "-".join([str(round(x , bit)) for x in col_data[i:i+5]])
-        #print(ngram)
-        target = round(pct_chg[i-1], 0)
-        if not ngram_probability.get(ngram):
-            ngram_probability[ngram] = {target:1}
-        else:
-            if not ngram_probability[ngram].get(target):
-                ngram_probability[ngram][target] = 1
-            else:
-                ngram_probability[ngram][target] += 1
-    today_ngram = "-".join([str(round(x , bit)) for x in col_data[0:5]])
-    try:
-        print("今天的Ngram为",  today_ngram, '\n其对应的可能涨跌为：%s', ngram_probability[today_ngram])
-    except Exception as e:
-        print(e)
-        pass
-    # print(ngram_probability)
-    return ngram_probability
 
 if __name__ == '__main__':
     df = get_daily_basic('20210609')
@@ -946,16 +869,21 @@ if __name__ == '__main__':
     ##################
     daily_basic = get_daily_basic()
     daily_basic.set_index(['ts_code'], inplace=True)
-    time_format = 'weekly'
+    # time_format = 'weekly'
+    time_format = 'daily'
     niceCode={}
     os.system('rm mo-%s.txt'%time_format)
+    os.system('rm awei-%s.txt'%time_format)
     os.system('rm -rf stock_%ss'%time_format)
     stock_data, ok_stock = all_stock()
-    for i in range(10, -1, -1):
+    all_code_filter = []
+    for i in range(20, -1, -1):
         if time_format == 'weekly':
-            get_best_stcok(stock_data, ok_stock, i, 5, ma_value=3, ma_value_1=10, filter_rate=0.15)
+            code_filter = get_best_stcok(stock_data, ok_stock, i, 5, ma_value=3, ma_value_1=10, filter_rate=0.15, codes = all_code_filter)
         else:
-            get_best_stcok(stock_data, ok_stock, i, 6, ma_value=5, ma_value_1=10, filter_rate=0.15)
+            # get_best_stcok_by_vol(stock_data, ok_stock, i, 40, ma_value=5, ma_value_1=10)
+            code_filter = get_best_stcok(stock_data, ok_stock, i, 6, ma_value=5, ma_value_1=10, filter_rate=0.1, codes = all_code_filter)
+        all_code_filter += code_filter
     # get_best_stcok_by_ma(stock_data, ok_stock, 0, 0, ma_value=3, ma_value_1=10)
 
     get_best_stcok_by_awei(stock_data, ok_stock, 0, 5, ma_value=3, ma_value_1=10, )

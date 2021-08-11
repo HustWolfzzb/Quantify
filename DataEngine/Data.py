@@ -115,9 +115,14 @@ def get_pro_monthly(ts_code, start_date='2021-01-04', end_date= str(datetime.dat
     return  pro.monthly(ts_code='000001.SZ', start_date='20180101', end_date='20181101', fields='ts_code,trade_date,open,high,low,close,vol,amount')
 
 def get_stock_concepts(code):
-    if code.find('TS')!=-1 or code.find('ts') != -1:
-        return pro.concept_detail(id=code, fields='ts_code,name')
+    if code.find('TS') != -1 or code.find('ts') != -1:
+        return pro.concept_detail(index_code=code, fields='ts_code,name')
     return pro.concept_detail(ts_code = code)
+
+def get_stock_shenwan_classify(code):
+    if code.find('SI')!=-1 or code.find('si') != -1:
+        return pro.index_member(id=code)
+    return pro.index_member(ts_code=code)
 
 
 def get_fina_indicator(ts_code):

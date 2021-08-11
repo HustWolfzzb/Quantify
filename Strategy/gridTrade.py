@@ -145,7 +145,7 @@ def grid_bs(codes, user):
                         buy_price = round(operate_price - gap, 3)
                         if price_now < close * 0.99:
                             buy_amount = buy_amount_base + 100
-                        elif price_now < close * 0.975:
+                        elif price_now < close * 0.9875:
                             buy_amount = buy_amount_base + 200
                         elif price_now < close * 0.96:
                             buy_amount = buy_amount_base + 300
@@ -158,10 +158,10 @@ def grid_bs(codes, user):
                     operate_prices[code] = buy_price
                     # 变Rate形式启动、而且要加大起步Gap，
                     buy_rates[code] = round(buy_rates[code] + 0.1, 5)
-                    sell_rates[code] = round(sell_rates[code] -0.1, 5)
+                    sell_rates[code] = round(sell_rates[code] - 0.1, 5)
                     save_rates_once(buy_rates,'buy')
                     save_rates_once(sell_rates,'sell')
-                    time.sleep(0.2)
+                    time.sleep(0.5)
 
                 # 判断是否进入卖点
                 if price_now > operate_price + gap * sell_rate:
@@ -173,7 +173,7 @@ def grid_bs(codes, user):
                         sell_price = round(operate_price + gap, 3)
                         if price_now > close * 1.01:
                             sell_amount = sell_amount_base + 100
-                        elif price_now > close * 1.025:
+                        elif price_now > close * 1.0275:
                             sell_amount = sell_amount_base + 200
                         elif price_now > close * 1.04:
                             sell_amount = sell_amount_base + 300
@@ -188,7 +188,7 @@ def grid_bs(codes, user):
                     sell_rates[code] = round(sell_rates[code] + 0.1, 5)
                     save_rates_once(buy_rates, 'buy')
                     save_rates_once(sell_rates, 'sell')
-                    time.sleep(0.2)
+                    time.sleep(0.5)
             except KeyError as e:
                 print(e)
             except Exception as e:

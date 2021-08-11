@@ -385,26 +385,27 @@ def grid_bs(codes=['shib'], init_rate_rates={}):
                     save_rates_once(sell_rates, 'sell')
                     save_rates_once(buy_rates, 'buy')
                     buy_price = round(operate_price - gap, init_rr['price_bit'])
-                    buy_amount = round(10/buy_price, init_rr['amount_bit'])
+                    buy_amount = round(10 * (buy_rate / init_rr['buy'] * 1.5) / buy_price, init_rr['amount_bit'])
                     while buy_price * buy_amount < 5:
-                        buy_amount *= 1.02
+                        buy_amount *= 1.03
                     buy_amount = round(buy_amount, init_rr['amount_bit'])
                     x = order(symbol+'usdt', 'buy-limit', buy_amount, buy_price, price_now)
                     if x == 0:
                         print("买入出毛病了，快看")
                         break
                     print("\r [%s] Price  Now:%s, Amount:%s, Operate_price:%s" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), round(price_now,init_rr['price_bit']), buy_amount, buy_price))
+                    os.system("echo '[%s] Price  Now:%s, Amount:%s, Operate_price:%s' >> exist.txt" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), round(price_now,init_rr['price_bit']), buy_amount, buy_price))
                     operate_prices[symbol] = buy_price
                     time.sleep(0.2)
                     buy_times[symbol] += 1
 
-                if price_now > operate_price + gap * round(sell_rate,1):
+                if price_now > operate_price + gap * round(sell_rate, 1):
                     buy_rates[symbol] = init_rr['buy']
-                    sell_rates[symbol] *= 1.15
+                    sell_rates[symbol] *= 1.12
                     save_rates_once(sell_rates, 'sell')
                     save_rates_once(buy_rates, 'buy')
                     sell_price = round(operate_price + gap, init_rr['price_bit'])
-                    sell_amount = round(10/sell_price, init_rr['amount_bit'])
+                    sell_amount = round(10 * (sell_rate / init_rr['sell'] * 1.5) / sell_price, init_rr['amount_bit'])
                     while sell_price * sell_amount < 5.1:
                         sell_amount *= 1.02
                     sell_amount = round(sell_amount, init_rr['amount_bit'])
@@ -415,6 +416,7 @@ def grid_bs(codes=['shib'], init_rate_rates={}):
                         print("卖出出毛病了，快看")
                         break
                     print("\r [%s] Price  Now:%s, Amount:%s, Operate_price:%s" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), round(price_now,init_rr['price_bit']), sell_amount, sell_price))
+                    os.system("echo '[%s] Price  Now:%s, Amount:%s, Operate_price:%s' >> exist.txt" % (BeijingTime('%Y-%m-%dT%H:%M:%S'), round(price_now,init_rr['price_bit']), sell_amount, sell_price))
                     operate_prices[symbol] = sell_price
                     time.sleep(0.2)
                     sell_times[symbol] += 1
@@ -456,3 +458,4 @@ if __name__ == '__main__':
     grid_bs(codes, init_rate_rates=init_rate_paras)
     # order('shibusdt', 'sell-market', 1000000, 7.77e-06)
     # print(get_price('shib'))
+
