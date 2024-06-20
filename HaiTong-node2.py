@@ -13,9 +13,7 @@ if sys.platform == 'linux':
 elif sys.platform == 'darwin':
     user = ''
 else:
-    user = easytrader.use('htzq_client')
-    user.connect(r'C:\Program Files\海通证券委托\xiadan.exe')
-
+    自己找吧
 
 class User():
     def __init__(self, user):
